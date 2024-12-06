@@ -12,27 +12,11 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 import plotly.graph_objs as go
+from joblib import dump, load
+import os
+import shap
+import plotly.express as px
 
-# Load and scale the data
-oect_data = pd.read_csv('datasets/oect_summary_posted_rf__plus_ml_combined.csv')
-oect_data['coating_on_top.sol_label'] = oect_data['coating_on_top.sol_label'].map(lambda x: x.lstrip('mg/ml').rstrip('mg/ml'))
-oect_data['coating_on_top.substrate_label'] = oect_data['coating_on_top.substrate_label'].map(lambda x: x.lstrip('nm').rstrip('nm'))
-oect_data['coating_on_top.sol_label'] = pd.to_numeric(oect_data['coating_on_top.sol_label'])
-oect_data['coating_on_top.substrate_label'] = pd.to_numeric(oect_data['coating_on_top.substrate_label'])
-oect_data['coating_on_top.vel'] = pd.to_numeric(oect_data['coating_on_top.vel'])
-oect_data['coating_on_top.T'] = pd.to_numeric(oect_data['coating_on_top.T'])
-
-scaler = MinMaxScaler()
-feature_columns = ["coating_on_top.sol_label", "coating_on_top.substrate_label", "coating_on_top.vel", "coating_on_top.T"]
-whole_space_scaled = scaler.fit_transform(oect_data[feature_columns].values)
-whole_space_scaled = pd.DataFrame(whole_space_scaled, columns=feature_columns)
-transcond_scaled = scaler.fit_transform(oect_data['transconductance'].values.reshape(-1, 1))
-
-train_data_scaled = whole_space_scaled.iloc[:21, :]
-input = train_data_scaled.values
-output = transcond_scaled[:21].ravel()
-
-kfold = model_selection.KFold(n_splits=5, random_state=7, shuffle=True)
 
 # Gaussian Process Regressor
 def gp_regression(Xtrain, Ytrain):
@@ -50,12 +34,21 @@ def build_nn_model():
         layers.Dense(2, activation="relu"),
         layers.Dense(1)
     ])
-    optimizer = tf.keras.optimizers.RMSprop(0.01)
+    optimizer = tf.keras.optimizers.RMSprop(0.001)
     model.compile(loss='mse', optimizer=optimizer, metrics=['mae', 'mse'])
     return model
 
 # Perform evaluation using different models
-def evaluate_ml_models():
+def evaluate_ml_models(oect_data):
+    scaler = MinMaxScaler()
+    feature_columns = ["coating_on_top.sol_label", "coating_on_top.substrate_label", "coating_on_top.vel", "coating_on_top.T"]
+    whole_space_scaled = scaler.fit_transform(oect_data[feature_columns].values)
+    whole_space_scaled = pd.DataFrame(whole_space_scaled, columns=feature_columns)
+    transcond_scaled = scaler.fit_transform(oect_data['transconductance'].values.reshape(-1, 1))
+
+    train_data_scaled = whole_space_scaled.iloc[:, :]
+    input = train_data_scaled.values
+    output = transcond_scaled[:].ravel()
     results = {
         "Linear Regression": {"train_rmse": [], "test_rmse": [], "test_rmse_average": [], "test_rmse_std": []},
         "Random Forest": {"train_rmse": [], "test_rmse": [], "test_rmse_average": [], "test_rmse_std": []},
@@ -64,7 +57,7 @@ def evaluate_ml_models():
         "AdaBoost": {"train_rmse": [], "test_rmse": [], "test_rmse_average": [], "test_rmse_std": []},
         "Neural Net": {"train_rmse": [], "test_rmse": [], "test_rmse_average": [], "test_rmse_std": []}
     }
-
+    kfold = model_selection.KFold(n_splits=5, random_state=7, shuffle=True)
     for train_index, test_index in kfold.split(input):
         X_train, X_test = input[train_index], input[test_index]
         y_train, y_test = output[train_index], output[test_index]
@@ -98,15 +91,25 @@ def evaluate_ml_models():
             np.sqrt(metrics.mean_squared_error(y_test, svr.predict(X_test))))
 
         # AdaBoost Regressor
-        adaboost = AdaBoostRegressor(n_estimators=1000, random_state=0).fit(X_train, y_train)
+        adaboost = AdaBoostRegressor(n_estimators=500, random_state=0).fit(X_train, y_train)
         results["AdaBoost"]["train_rmse"].append(
             np.sqrt(metrics.mean_squared_error(y_train, adaboost.predict(X_train))))
         results["AdaBoost"]["test_rmse"].append(
             np.sqrt(metrics.mean_squared_error(y_test, adaboost.predict(X_test))))
 
         # Neural Network
-        nn_model = build_nn_model()
-        nn_model.fit(X_train, y_train, epochs=1000, verbose=0)
+        if os.path.exists('ml_model_weights/nn_model_weights.h5'):
+            print("Loading saved weights...")
+            nn_model = build_nn_model()  # Ensure the model architecture is the same
+            nn_model.load_weights('ml_model_weights/nn_model_weights.h5')
+            print("Weights loaded successfully. Skipping training.")
+        else:
+            print("Weights not found. Training the model...")
+            nn_model = build_nn_model()
+            nn_model.fit(X_train, y_train, epochs=1000, verbose=0)
+            nn_model.save_weights('ml_model_weights/nn_model_weights.h5')
+            print("Training complete and weights saved.")
+
         results["Neural Net"]["train_rmse"].append(
             np.sqrt(metrics.mean_squared_error(y_train, nn_model.predict(X_train))))
         results["Neural Net"]["test_rmse"].append(
@@ -191,13 +194,16 @@ def plot_whiskerplots(results):
     return fig
 
 
-def shapley_analysis_plotly():
-    import shap
-    import plotly.express as px
+def shapley_analysis_plotly(oect_data):
+    scaler = MinMaxScaler()
+    feature_columns = ["coating_on_top.sol_label", "coating_on_top.substrate_label", "coating_on_top.vel", "coating_on_top.T"]
+    whole_space_scaled = scaler.fit_transform(oect_data[feature_columns].values)
+    whole_space_scaled = pd.DataFrame(whole_space_scaled, columns=feature_columns)
+    transcond_scaled = scaler.fit_transform(oect_data['transconductance'].values.reshape(-1, 1))
 
     mdl = RandomForestRegressor(max_depth=12, random_state=888)
     X, y = whole_space_scaled, transcond_scaled[:].ravel()
-    
+    # print('y', len(y))
     mdl.fit(X, y)
     explainer = shap.TreeExplainer(mdl, feature_perturbation='tree_path_dependent')
     shap_values = explainer.shap_values(X)
@@ -213,7 +219,7 @@ def shapley_analysis_plotly():
         combined_df, 
         x='SHAP Value', y='Feature', 
         color='Feature Value', 
-        title='SHAP Summary Plot',
+        # title='SHAP Summary Plot',
         labels={'SHAP Value': 'SHAP Value (Impact on Model Output)', 'Feature': 'Feature (Ranked by Extremes)'},
         color_continuous_scale='Viridis',
         hover_data=['SHAP Value', 'Feature Value']
@@ -221,13 +227,76 @@ def shapley_analysis_plotly():
     fig.update_layout(
         xaxis_title='SHAP Value',
         yaxis_title='Feature (Ranked by SHAP Value Extremes)',
-        showlegend=False, height=600,
-        width=1000
+        showlegend=False, height=800,
+        width=800
+    )
+    fig.update_traces(
+        marker=dict(
+            size=16,  # Set larger marker size
+            opacity=0.8  # Set marker opacity for better visibility
+        )
+    )
+
+    # Add a vertical line at zero
+    fig.add_vline(
+        x=0,
+        line=dict(color="black", width=2, dash="dash"),
+        # annotation_text="Baseline",
+        # annotation_position="top right"
+    )
+
+    # Update layout for better appearance
+    fig.update_layout(
+        title="",
+        title_font=dict(size=1),
+        xaxis=dict(
+            title="SHAP Value",
+            title_font=dict(size=16),
+            tickfont=dict(size=16)  # Larger x-axis labels
+        ),
+        yaxis=dict(
+            title="Feature",
+            title_font=dict(size=16),
+            tickfont=dict(size=16)  # Larger y-axis labels
+        ),
+        margin=dict(l=50, r=50, t=20, b=40),
+        height=500,
+        width=800
     )
     # fig.show()
     return fig
 
 # results = evaluate_ml_models()
+# print(results)
 # plot_ml_comparison(results)
 # plot_whiskerplots(results)
 # shapley_analysis_plotly()
+
+import json
+# Load and scale the data
+oect_data = pd.read_csv('datasets/oect_summary_posted_rf__plus_ml_combined.csv')
+oect_data['coating_on_top.sol_label'] = oect_data['coating_on_top.sol_label'].map(lambda x: x.lstrip('mg/ml').rstrip('mg/ml'))
+oect_data['coating_on_top.substrate_label'] = oect_data['coating_on_top.substrate_label'].map(lambda x: x.lstrip('nm').rstrip('nm'))
+oect_data['coating_on_top.sol_label'] = pd.to_numeric(oect_data['coating_on_top.sol_label'])
+oect_data['coating_on_top.substrate_label'] = pd.to_numeric(oect_data['coating_on_top.substrate_label'])
+oect_data['coating_on_top.vel'] = pd.to_numeric(oect_data['coating_on_top.vel'])
+oect_data['coating_on_top.T'] = pd.to_numeric(oect_data['coating_on_top.T'])
+
+# def precompute_results(start_idx,  end_idx):
+    
+#     results = evaluate_ml_models(oect_data.iloc[start_idx:end_idx])
+#     with open(f"ml_model_weights/results_{start_idx}_{end_idx}.json", 'w') as f:
+#         json.dump(results, f)
+
+
+# precompute_results(0, oect_data.shape[0])
+
+# for i in range(20, oect_data.shape[0]):
+#     precompute_results(0, i)
+
+
+# import plotly.io as pio
+
+# Precompute and save the plot
+# fig = shapley_analysis_plotly()
+# pio.write_json(fig, "shap_plot.json")
