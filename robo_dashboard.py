@@ -36,14 +36,14 @@ def update_message_box(oect_data):
         macd = ta.macd(df['transconductance'], fast=10, slow=20, signal=8)
         df = pd.concat([df, macd], axis=1)
         # print('MACD', df['MACDh_10_20_8'].values)
-        if df['MACDh_10_20_8'].values[-1]<= -30:
-            return "The transconductance MACD indicator is showing a downward trajectory. Consider Changing strategy."
+        if df['MACDh_10_20_8'].values[-1]< 0:
+            return "The MACD indicator is showing a downward trajectory. Consider changing strategy by selecting different ML model or modify the parameter range."
     # if consecutive_declines(slopes) >= 3:
     #     return "The transconductance trendline slope is showing a downward trajectory. Consider Changing strategy."
     except:   
-        return "Robo-advisor will display a message if any workflow modification is required."
+        return "AI-advisor will display a message if any workflow modification is required."
     
-    return "Robo-advisor will display a message if any workflow modification is required."
+    return "AI-advisor will display a message if any workflow modification is required."
 
 
 def consecutive_declines(data):
@@ -180,61 +180,74 @@ def render_content(n_intervals, tab):
     oect_data['coating_on_top.T'] = pd.to_numeric(oect_data['coating_on_top.T'])
     oect_data['image'] = oect_data['ID'].apply(create_image_link) 
 
-    if tab == 'tab-1':
-        # fig_stock_trends = create_plotly_stock_market_plot(oect_data)
-        # response = update_message_box(oect_data)
-            # feature_importance_fig = shapley_analysis_plotly()
-        
+    if tab == 'tab-1':       
         return html.Div([
-        html.Div([
+
+            # Message box
             html.Div([
-                html.H3("Trendline monitoring", style={'textAlign': 'center', 'marginTop': '2px', 'marginBottom': '1px'}),
-                dcc.Graph(
-                    id='stock-market-plot',
-                    style={'height': '600px','marginTop': '1px', 'width': '100%'}
-                )
-            ], style={'width': '100%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+                    html.H3("Message Box", style={'textAlign': 'center'}),
+                    html.Div(id='message-box',
+                    style={
+                    'width': '60%',
+                    'border': '2px solid blue', 
+                    'padding': '20px', 
+                    'border-radius': '5px', 
+                    'box-shadow': '2px 2px 10px rgba(0, 0, 0, 0.1)', 
+                    'background-color': '#f9f9f9',
+                    'color': 'black',
+                    'font-weight': 'bold',
+                    'font-size': '18px',
+                    'text-align': 'center',
+                    'margin': 'auto',
+                    }),       
+                    # Stockmarket trendline
+                    html.H3("Trendline monitoring", style={'textAlign': 'center',  'marginTop': '30px'}), # , 'marginTop': '3px'
+                    dcc.Graph(
+                            id='stock-market-plot',
+                            style={'width': '100%', 'height': '600px', 'marginTop': '10px'} # 'marginBottom': '10px'
+                        )
+                    ]#, #style={'width': '100%'} #, 'display': 'flex'
+                    ),
 
-                # Message box
+            html.Div([
                 html.Div([
-                        html.H3("Message Box", style={'textAlign': 'center'}),
-                        html.Div(id='message-box',
+                    # Title for the ML comparison table
+                    html.H3("ML Model Evaluation", style={'textAlign': 'center'}),
+
+                #     # Results table below the title
+                #     html.Div(
+                #         id='results-table-div',
+                #         style={'width': '100%', 'display': 'block', 'margin-top': '50px'}
+                #     )
+                # ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+                    html.Div(                         
+                        id='results-table-div',                         
                         style={
-                        'width': '80%',
-                        'border': '2px solid blue', 
-                        'padding': '20px', 
-                        'border-radius': '5px', 
-                        'box-shadow': '2px 2px 10px rgba(0, 0, 0, 0.1)', 
-                        'background-color': '#f9f9f9',
-                        'color': 'black',
-                        'font-weight': 'bold',
-                        'font-size': '18px',
-                        'text-align': 'center'
-                    })
-                ], style={'width': '80%', 'display': 'inline-block', 'verticalAlign': 'top'})  
-            ], style={'width': '100%', 'display': 'flex', 'justify-content': 'space-between'}),
+                            'width': '100%', 
+                            'display': 'block', 
+                            'margin-top': '50px',
+                            'margin-left': '30px',  # Add left margin
+                            'height': '500px',      # Increase height (adjust value as needed)
+                            'overflow': 'auto'      # Add scrolling if content exceeds height
+                        }                     
+                    )], style={
+                        'width': '48%', 
+                        'display': 'inline-block', 
+                        'verticalAlign': 'top',
+                        'padding-left': '20px'  # Additional left padding for the entire container
+                    }),
+
+
+                # Feature importance plot with a title
                 html.Div([
-                    html.Div([
-                        # Title for the table
-                        html.H3("ML Model Evaluation", style={'textAlign': 'center'}),
-
-                        # Results table below the title
-                        html.Div(
-                            id='results-table-div',
-                            style={'width': '100%', 'display': 'block', 'margin-top': '20px'}
-                        )
-                    ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
-
-                    # Feature importance plot with a title
-                    html.Div([
-                        html.H3("SHAP Summary Plot", style={'textAlign': 'center'}),
-                        dcc.Graph(
-                            id='feature-importance-plot',
-                            style={'width': '100%', 'display': 'inline-block', 'verticalAlign': 'top'}
-                        )
-                    ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'})
-                ], style={'width': '100%', 'display': 'flex', 'justify-content': 'space-between'})
-        ])
+                    html.H3("SHAP Summary Plot", style={'textAlign': 'center'}),
+                    dcc.Graph(
+                        id='feature-importance-plot',
+                        style={'width': '100%', 'display': 'inline-block', 'verticalAlign': 'top'}
+                    )
+                ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'})
+            ], style={'width': '100%', 'display': 'flex', 'justify-content': 'space-between'})
+            ])
     
     elif tab == 'tab-2':
         return html.Div([
@@ -244,11 +257,11 @@ def render_content(n_intervals, tab):
                     id='sample-table',
                     columns=[
                         {"name": 'ID', "id": 'ID'},
-                        {"name": 'Coating Speed', "id": 'coating_on_top.vel'},
-                        {"name": 'Coating Temperature', "id": 'coating_on_top.T'},
-                        {"name": 'Concentration', "id": 'coating_on_top.sol_label'},
-                        {"name": 'Substrate', "id": 'coating_on_top.substrate_label'},
-                        {"name": 'Transconductance', "id": 'transconductance'},
+                        {"name": 'Coating Speed (mm/s)', "id": 'coating_on_top.vel'},
+                        {"name": 'Coating Temperature (oC)', "id": 'coating_on_top.T'},
+                        {"name": 'Concentration (mg/ml)', "id": 'coating_on_top.sol_label'},
+                        {"name": 'Substrate (nm)', "id": 'coating_on_top.substrate_label'},
+                        {"name": "μC*", "id": 'transconductance'},
                         {"name": 'Film Image', "id": 'image', "presentation": "markdown"},
                     ],
                     data=oect_data.to_dict('records'),
@@ -375,7 +388,7 @@ def update_graphs(rows):
     style_plot(fig_concentration)
     fig_concentration.update_layout(
         xaxis_title="Concentration (mg/ml)",
-        yaxis_title="μC*",
+        yaxis_title= "μC* (F cm⁻¹ V⁻¹ s⁻¹)",
         plot_bgcolor='white',
         coloraxis_colorbar=dict(title="μC*"),
     )
@@ -392,7 +405,7 @@ def update_graphs(rows):
     style_plot(fig_substrate)
     fig_substrate.update_layout(
         xaxis_title="Substrate (nm)",
-        yaxis_title="μC*",
+        yaxis_title= "μC* (F cm⁻¹ V⁻¹ s⁻¹)",
         plot_bgcolor='white',
         coloraxis_colorbar=dict(title="μC*"),
     )
@@ -408,7 +421,7 @@ def update_graphs(rows):
     style_plot(fig_speed)
     fig_speed.update_layout(
         xaxis_title="Coating Speed (mm/s)",
-        yaxis_title="μC*",
+        yaxis_title= "μC* (F cm⁻¹ V⁻¹ s⁻¹)*",
         plot_bgcolor='white',
         coloraxis_colorbar=dict(title="μC*"),
     )
@@ -424,7 +437,7 @@ def update_graphs(rows):
     style_plot(fig_temp)
     fig_temp.update_layout(
         xaxis_title="Coating Temperature (°C)",
-        yaxis_title="μC*",
+        yaxis_title= "μC* (F cm⁻¹ V⁻¹ s⁻¹)" , 
         plot_bgcolor='white',
         coloraxis_colorbar=dict(title="μC*"),
     )
@@ -508,24 +521,53 @@ def toggle_modal(active_cell, close_clicks, data, is_open):
 #     Output('results-table-div', 'children'),  
 #     Input('page-load', 'n_intervals')       
 # )
+
 def update_ml_models_table(filename):
-       # Load results from the JSON file
+    # Load results from the JSON file
     with open(filename, 'r') as f:
         results = json.load(f)
+
+    model_order = [
+        "Gaussian Process", "Linear Regression", "SVR", 
+        "Neural Net", "Random Forest", "AdaBoost"
+    ]
 
     # Prepare table data
     table_data = [
         {
             "Model": model,
             "Average Test RMSE": f"{metrics['test_rmse_average']:.4f}",
-            "Test RMSE Std Dev": f"{metrics['test_rmse_std']:.4f}"
+            "Test RMSE Std Dev": f"{metrics['test_rmse_std']:.4f}",
+            "Train-Test RMSE Diff": f"{abs(metrics['train_rmse_average'] - metrics['test_rmse_average']):.4f}"
         }
         for model, metrics in results.items()
     ]
 
+    table_data.sort(key=lambda x: model_order.index(x["Model"]))
+
     # Find the rows with the lowest Average Test RMSE and Test RMSE Std Dev
     min_rmse = min(table_data, key=lambda x: float(x["Average Test RMSE"]))["Average Test RMSE"]
     min_std_dev = min(table_data, key=lambda x: float(x["Test RMSE Std Dev"]))["Test RMSE Std Dev"]
+
+    # Define color mapping for each algorithm group
+    algorithm_colors = {
+        "Random Forest": "lightgreen",
+        "AdaBoost": "lightgreen",
+        "Gaussian Process": "lightyellow",
+        "SVR": "lightblue",
+        "Linear Regression": "lightblue",
+        "Neural Net": "lightblue"
+    }
+
+    # Add row-specific conditional styling
+    style_data_conditional = [
+        {
+            'if': {'filter_query': f'{{Model}} = "{algo}"'},
+            'backgroundColor': color,
+            'color': 'black'
+        }
+        for algo, color in algorithm_colors.items()
+    ]
 
     # Generate the results table
     results_table = dash_table.DataTable(
@@ -533,33 +575,69 @@ def update_ml_models_table(filename):
         columns=[
             {"name": "Model", "id": "Model"},
             {"name": "Average Test RMSE", "id": "Average Test RMSE"},
-            {"name": "Test RMSE Std Dev", "id": "Test RMSE Std Dev"}
+            {"name": "Test RMSE Std Dev", "id": "Test RMSE Std Dev"},
+            {"name": "Train-Test RMSE Diff", "id": "Train-Test RMSE Diff"}
         ],
         style_table={'overflowX': 'auto', 'width': '100%'},
         style_cell={'textAlign': 'center', 'padding': '10px', 'fontSize': '16px'},  # Larger font size
         style_header={'fontWeight': 'bold', 'fontSize': '18px'},  # Larger header font size
-        style_data_conditional=[
-            {
-                'if': {
-                    'filter_query': f'{{Average Test RMSE}} = "{min_rmse}"',
-                    'column_id': 'Average Test RMSE'
-                },
-                'backgroundColor': 'lightgreen',
-                'fontWeight': 'bold',
-                'color': 'black'
-            },
-            {
-                'if': {
-                    'filter_query': f'{{Test RMSE Std Dev}} = "{min_std_dev}"',
-                    'column_id': 'Test RMSE Std Dev'
-                },
-                'backgroundColor': 'lightgreen',
-                'fontWeight': 'bold',
-                'color': 'black'
-            }
-        ]
+        style_data_conditional=style_data_conditional
     )
+
     return [results_table]
+
+# def update_ml_models_table(filename):
+#        # Load results from the JSON file
+#     with open(filename, 'r') as f:
+#         results = json.load(f)
+
+#     # Prepare table data
+#     table_data = [
+#         {
+#             "Model": model,
+#             "Average Test RMSE": f"{metrics['test_rmse_average']:.4f}",
+#             "Test RMSE Std Dev": f"{metrics['test_rmse_std']:.4f}"
+#         }
+#         for model, metrics in results.items()
+#     ]
+
+#     # Find the rows with the lowest Average Test RMSE and Test RMSE Std Dev
+#     min_rmse = min(table_data, key=lambda x: float(x["Average Test RMSE"]))["Average Test RMSE"]
+#     min_std_dev = min(table_data, key=lambda x: float(x["Test RMSE Std Dev"]))["Test RMSE Std Dev"]
+
+#     # Generate the results table
+#     results_table = dash_table.DataTable(
+#         data=table_data,
+#         columns=[
+#             {"name": "Model", "id": "Model"},
+#             {"name": "Average Test RMSE", "id": "Average Test RMSE"},
+#             {"name": "Test RMSE Std Dev", "id": "Test RMSE Std Dev"}
+#         ],
+#         style_table={'overflowX': 'auto', 'width': '100%'},
+#         style_cell={'textAlign': 'center', 'padding': '10px', 'fontSize': '16px'},  # Larger font size
+#         style_header={'fontWeight': 'bold', 'fontSize': '18px'},  # Larger header font size
+#         style_data_conditional=[
+#             {
+#                 'if': {
+#                     'filter_query': f'{{Average Test RMSE}} = "{min_rmse}"',
+#                     'column_id': 'Average Test RMSE'
+#                 },
+#                 'backgroundColor': 'lightgreen',
+#                 'fontWeight': 'bold',
+#                 'color': 'black'
+#             },
+#             {
+#                 'if': {
+#                     'filter_query': f'{{Test RMSE Std Dev}} = "{min_std_dev}"',
+#                     'column_id': 'Test RMSE Std Dev'
+#                 },
+#                 'backgroundColor': 'lightgreen',
+#                 'fontWeight': 'bold',
+#                 'color': 'black'
+#             }
+#         ]
+#     )
+#     return [results_table]
 
 def update_feature_importance_plot():
     # # Load precomputed SHAP plot from JSON
@@ -593,6 +671,44 @@ def update_feature_importance_plot():
         height=500,
         width=800
     )
+
+    feature_importance_fig.update_layout(
+        plot_bgcolor='rgba(245, 245, 245, 0.8)',  # Light gray background
+        paper_bgcolor='rgba(255, 255, 255, 0.8)',  # Almost white paper background
+        xaxis=dict(
+            title="SHAP Value",
+            title_font=dict(size=20),  # Increased title font size
+            tickfont=dict(size=20),    # Increased tick label font size
+            gridcolor='white'          # White grid lines
+        ),
+        yaxis=dict(
+            title="Feature",
+            title_font=dict(size=20),  # Increased title font size
+            tickfont=dict(size=20),    # Increased tick label font size
+            gridcolor='white'          # White grid lines
+        ),
+        coloraxis_colorbar=dict(
+            title="Feature Value",
+            title_font=dict(size=18),  # Increased colorbar title font size
+            tickfont=dict(size=16)     # Increased colorbar tick font size
+        ),
+        margin=dict(l=50, r=50, t=20, b=40),
+        height=500,
+        width=800
+    )
+    
+    feature_importance_fig.update_traces(
+        marker=dict(
+            size=20,
+            opacity=0.8
+        )
+    )
+    
+    feature_importance_fig.add_vline(
+        x=0,
+        line=dict(color="black", width=2, dash="dash"),
+    )
+    
 
     return feature_importance_fig
 
