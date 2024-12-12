@@ -213,28 +213,21 @@ def render_content(n_intervals, tab):
                 html.Div([
                     # Title for the ML comparison table
                     html.H3("ML Model Evaluation", style={'textAlign': 'center'}),
-
-                #     # Results table below the title
-                #     html.Div(
-                #         id='results-table-div',
-                #         style={'width': '100%', 'display': 'block', 'margin-top': '50px'}
-                #     )
-                # ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
                     html.Div(                         
                         id='results-table-div',                         
                         style={
                             'width': '100%', 
                             'display': 'block', 
                             'margin-top': '50px',
-                            'margin-left': '30px',  # Add left margin
-                            'height': '500px',      # Increase height (adjust value as needed)
-                            'overflow': 'auto'      # Add scrolling if content exceeds height
+                            'margin-left': '30px',
+                            'height': '500px',      
+                            'overflow': 'auto'     
                         }                     
                     )], style={
                         'width': '48%', 
                         'display': 'inline-block', 
                         'verticalAlign': 'top',
-                        'padding-left': '20px'  # Additional left padding for the entire container
+                        'padding-left': '20px'  
                     }),
 
 
@@ -318,54 +311,6 @@ def render_content(n_intervals, tab):
     
 ############################################################################################################
 
-# Callbacks for updating the Shapley analysis plot
-# @app.callback(
-#     Output('feature-importance-plot', 'figure'),
-#     Input('page-load', 'n_intervals')  # Trigger on load
-# )
-# def update_feature_importance_plot(_):
-#     # # Load precomputed SHAP plot from JSON
-#     # with open("shap_plot.json", "r") as f:
-#     #     feature_importance_fig = pio.from_json(f.read())  # Use plotly.io.from_json to load the figure
-
-#     feature_importance_fig = shapley_analysis_plotly()
-#     # Enhance plot aesthetics
-#     feature_importance_fig.update_traces(
-#         marker=dict(
-#             size=16,  # Set larger marker size
-#             opacity=0.8  # Set marker opacity for better visibility
-#         )
-#     )
-
-#     # Add a vertical line at zero
-#     feature_importance_fig.add_vline(
-#         x=0,
-#         line=dict(color="black", width=2, dash="dash"),
-#         # annotation_text="Baseline",
-#         # annotation_position="top right"
-#     )
-
-#     # Update layout for better appearance
-#     feature_importance_fig.update_layout(
-#         title="",
-#         title_font=dict(size=1),
-#         xaxis=dict(
-#             title="SHAP Value",
-#             title_font=dict(size=16),
-#             tickfont=dict(size=16)  # Larger x-axis labels
-#         ),
-#         yaxis=dict(
-#             title="Feature",
-#             title_font=dict(size=16),
-#             tickfont=dict(size=16)  # Larger y-axis labels
-#         ),
-#         margin=dict(l=50, r=50, t=20, b=40),
-#         height=500,
-#         width=800
-#     )
-
-#     return feature_importance_fig
-
 # Callbacks for dynamic updating of the scatterplots
 @app.callback(
     Output('concentration-plot', 'figure'),
@@ -448,7 +393,6 @@ def update_graphs(rows):
 #############################################################################################################
 # Callback to generate and display the ML models comparison plot
 
-
 def style_plot(fig):
     fig.update_traces(marker=dict(size=12,
                               line=dict(width=2,
@@ -501,26 +445,6 @@ def toggle_modal(active_cell, close_clicks, data, is_open):
 
     return is_open, None
 
-# Update your callback
-# @app.callback(
-#     [Output('stock-market-plot', 'figure'),
-#      Output('results-table-div', 'children', allow_duplicate=True),
-#      Output('feature-importance-plot', 'figure', allow_duplicate=True)],
-#     [Input('window-slider', 'value')],
-#     prevent_initial_call=True
-# )
-# def update_charts(slider_value):
-#     data = pd.read_csv('datasets/oect_summary_posted_rf__plus_ml_combined.csv')
-#     fig = create_plotly_stock_market_plot(data, slider_value)
-#     model_results = evaluate_ml_models(data.iloc[:slider_value])
-#     importance_fig = shapley_analysis_plotly(data.iloc[:slider_value])
-#     return fig, model_results, importance_fig
-
-
-# @app.callback(
-#     Output('results-table-div', 'children'),  
-#     Input('page-load', 'n_intervals')       
-# )
 
 def update_ml_models_table(filename):
     # Load results from the JSON file
@@ -545,21 +469,18 @@ def update_ml_models_table(filename):
 
     table_data.sort(key=lambda x: model_order.index(x["Model"]))
 
-    # Find the rows with the lowest Average Test RMSE and Test RMSE Std Dev
     min_rmse = min(table_data, key=lambda x: float(x["Average Test RMSE"]))["Average Test RMSE"]
     min_std_dev = min(table_data, key=lambda x: float(x["Test RMSE Std Dev"]))["Test RMSE Std Dev"]
 
-    # Define color mapping for each algorithm group
     algorithm_colors = {
-        "Random Forest": "lightgreen",
-        "AdaBoost": "lightgreen",
+        "Random Forest": "mediumseagreen",
+        "AdaBoost": "mediumseagreen",
         "Gaussian Process": "lightyellow",
-        "SVR": "lightblue",
+        "SVR": "teal",
         "Linear Regression": "lightblue",
-        "Neural Net": "lightblue"
+        "Neural Net": "teal"
     }
 
-    # Add row-specific conditional styling
     style_data_conditional = [
         {
             'if': {'filter_query': f'{{Model}} = "{algo}"'},
@@ -569,7 +490,6 @@ def update_ml_models_table(filename):
         for algo, color in algorithm_colors.items()
     ]
 
-    # Generate the results table
     results_table = dash_table.DataTable(
         data=table_data,
         columns=[
@@ -579,65 +499,12 @@ def update_ml_models_table(filename):
             {"name": "Train-Test RMSE Diff", "id": "Train-Test RMSE Diff"}
         ],
         style_table={'overflowX': 'auto', 'width': '100%'},
-        style_cell={'textAlign': 'center', 'padding': '10px', 'fontSize': '16px'},  # Larger font size
-        style_header={'fontWeight': 'bold', 'fontSize': '18px'},  # Larger header font size
+        style_cell={'textAlign': 'center', 'padding': '10px', 'fontSize': '16px'},  
+        style_header={'fontWeight': 'bold', 'fontSize': '18px'},  
         style_data_conditional=style_data_conditional
     )
-
     return [results_table]
 
-# def update_ml_models_table(filename):
-#        # Load results from the JSON file
-#     with open(filename, 'r') as f:
-#         results = json.load(f)
-
-#     # Prepare table data
-#     table_data = [
-#         {
-#             "Model": model,
-#             "Average Test RMSE": f"{metrics['test_rmse_average']:.4f}",
-#             "Test RMSE Std Dev": f"{metrics['test_rmse_std']:.4f}"
-#         }
-#         for model, metrics in results.items()
-#     ]
-
-#     # Find the rows with the lowest Average Test RMSE and Test RMSE Std Dev
-#     min_rmse = min(table_data, key=lambda x: float(x["Average Test RMSE"]))["Average Test RMSE"]
-#     min_std_dev = min(table_data, key=lambda x: float(x["Test RMSE Std Dev"]))["Test RMSE Std Dev"]
-
-#     # Generate the results table
-#     results_table = dash_table.DataTable(
-#         data=table_data,
-#         columns=[
-#             {"name": "Model", "id": "Model"},
-#             {"name": "Average Test RMSE", "id": "Average Test RMSE"},
-#             {"name": "Test RMSE Std Dev", "id": "Test RMSE Std Dev"}
-#         ],
-#         style_table={'overflowX': 'auto', 'width': '100%'},
-#         style_cell={'textAlign': 'center', 'padding': '10px', 'fontSize': '16px'},  # Larger font size
-#         style_header={'fontWeight': 'bold', 'fontSize': '18px'},  # Larger header font size
-#         style_data_conditional=[
-#             {
-#                 'if': {
-#                     'filter_query': f'{{Average Test RMSE}} = "{min_rmse}"',
-#                     'column_id': 'Average Test RMSE'
-#                 },
-#                 'backgroundColor': 'lightgreen',
-#                 'fontWeight': 'bold',
-#                 'color': 'black'
-#             },
-#             {
-#                 'if': {
-#                     'filter_query': f'{{Test RMSE Std Dev}} = "{min_std_dev}"',
-#                     'column_id': 'Test RMSE Std Dev'
-#                 },
-#                 'backgroundColor': 'lightgreen',
-#                 'fontWeight': 'bold',
-#                 'color': 'black'
-#             }
-#         ]
-#     )
-#     return [results_table]
 
 def update_feature_importance_plot():
     # # Load precomputed SHAP plot from JSON
@@ -673,24 +540,24 @@ def update_feature_importance_plot():
     )
 
     feature_importance_fig.update_layout(
-        plot_bgcolor='rgba(245, 245, 245, 0.8)',  # Light gray background
-        paper_bgcolor='rgba(255, 255, 255, 0.8)',  # Almost white paper background
+        plot_bgcolor='rgba(245, 245, 245, 0.8)',  
+        paper_bgcolor='rgba(255, 255, 255, 0.8)',  
         xaxis=dict(
             title="SHAP Value",
-            title_font=dict(size=20),  # Increased title font size
-            tickfont=dict(size=20),    # Increased tick label font size
-            gridcolor='white'          # White grid lines
+            title_font=dict(size=20), 
+            tickfont=dict(size=20),    
+            gridcolor='white'         
         ),
         yaxis=dict(
             title="Feature",
-            title_font=dict(size=20),  # Increased title font size
-            tickfont=dict(size=20),    # Increased tick label font size
-            gridcolor='white'          # White grid lines
+            title_font=dict(size=20), 
+            tickfont=dict(size=20),    
+            gridcolor='white'      
         ),
         coloraxis_colorbar=dict(
             title="Feature Value",
-            title_font=dict(size=18),  # Increased colorbar title font size
-            tickfont=dict(size=16)     # Increased colorbar tick font size
+            title_font=dict(size=18),  
+            tickfont=dict(size=16) 
         ),
         margin=dict(l=50, r=50, t=20, b=40),
         height=500,
@@ -707,9 +574,7 @@ def update_feature_importance_plot():
     feature_importance_fig.add_vline(
         x=0,
         line=dict(color="black", width=2, dash="dash"),
-    )
-    
-
+    )    
     return feature_importance_fig
 
 @app.callback(
@@ -737,9 +602,6 @@ def update_charts(relayout_data):
        importance_fig = shapley_analysis_plotly(filtered_data)
        return fig, model_results ,  importance_fig, update_message_box(filtered_data) #update_ml_models_table(model_results),
        
-   # Load results from the JSON file
-#    with open('results.json', 'r') as f:
-#         results = json.load(f)
    return create_plotly_stock_market_plot(oect_data), update_ml_models_table('ml_model_weights/results_0_64.json'), update_feature_importance_plot(), update_message_box(oect_data)
 
 if __name__ == '__main__':

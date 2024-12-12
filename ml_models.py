@@ -228,24 +228,24 @@ def shapley_analysis_plotly(oect_data):
     )
     
     fig.update_layout(
-        plot_bgcolor='rgba(245, 245, 245, 0.8)',  # Light gray background
-        paper_bgcolor='rgba(255, 255, 255, 0.8)',  # Almost white paper background
+        plot_bgcolor='rgba(245, 245, 245, 0.8)',  
+        paper_bgcolor='rgba(255, 255, 255, 0.8)', 
         xaxis=dict(
             title="SHAP Value",
-            title_font=dict(size=20),  # Increased title font size
-            tickfont=dict(size=30),    # Increased tick label font size
-            gridcolor='white'          # White grid lines
+            title_font=dict(size=20), 
+            tickfont=dict(size=30),   
+            gridcolor='white' 
         ),
         yaxis=dict(
             title="Feature",
-            title_font=dict(size=20),  # Increased title font size
-            tickfont=dict(size=30),    # Increased tick label font size
-            gridcolor='white'          # White grid lines
+            title_font=dict(size=20), 
+            tickfont=dict(size=30),  
+            gridcolor='white' 
         ),
         coloraxis_colorbar=dict(
             title="Feature Value",
-            title_font=dict(size=18),  # Increased colorbar title font size
-            tickfont=dict(size=16)     # Increased colorbar tick font size
+            title_font=dict(size=18), 
+            tickfont=dict(size=16) 
         ),
         margin=dict(l=50, r=50, t=20, b=40),
         height=500,
@@ -266,11 +266,7 @@ def shapley_analysis_plotly(oect_data):
     
     return fig
 
-# results = evaluate_ml_models()
-# print(results)
-# plot_ml_comparison(results)
-# plot_whiskerplots(results)
-# shapley_analysis_plotly()
+
 
 import json
 # Load and scale the data
@@ -289,15 +285,14 @@ def precompute_results(start_idx,  end_idx):
         json.dump(results, f)
 
 
-# precompute_results(0, oect_data.shape[0])
+if __name__ == "__main__":
+    import plotly.io as pio
 
-# for i in range(20, oect_data.shape[0]):
-#    precompute_results(0, i)
+    # Compute ML model results and save the metrics in json format
+    precompute_results(0, oect_data.shape[0])
+    for i in range(20, oect_data.shape[0]):
+       precompute_results(0, i)    
 
-
-
-# import plotly.io as pio
-
-# Precompute and save the plot
-# fig = shapley_analysis_plotly()
-# pio.write_json(fig, "shap_plot.json")
+    # Compute shapley results and save the plots 
+    fig = shapley_analysis_plotly()
+    pio.write_json(fig, "shap_plot.json")
