@@ -146,7 +146,6 @@ app.layout = html.Div([
     dcc.Tabs(id="tabs-styled-with-inline", value='tab-1', children=[
         dcc.Tab(label='AI advisor board', value='tab-1', style=tab_style, selected_style=tab_selected_style),
         dcc.Tab(label='Data visualization', value='tab-2', style=tab_style, selected_style=tab_selected_style),        
-        # dcc.Tab(label='ML Model Evaluation and Feature Importance', value='tab-3', style=tab_style, selected_style=tab_selected_style),
     ], style=tabs_styles),
     html.Div(id='tabs-content-inline'),
     html.Div(id='hover-data-output', style={'display': 'none'}),
