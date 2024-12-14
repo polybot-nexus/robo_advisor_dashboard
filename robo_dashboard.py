@@ -28,6 +28,7 @@ from utils import (  # , create_plotly_trendline_fit, get_trendline_slope
 
 def update_message_box(oect_data):
     import pandas_ta as ta
+
     df = oect_data.copy()
     df['SMA_10'] = ta.sma(df['transconductance'], length=10)
     df['EMA_10'] = ta.ema(df['transconductance'], length=10)
@@ -87,6 +88,7 @@ def find_film_image_path(id):
     """Finds the image path based on the given ID."""
     return f'assets/images/{id}_annealed_film.jpg'
 
+
 def image_base64(image_path):
     """Encodes the image to Base64 format."""
     try:
@@ -94,6 +96,7 @@ def image_base64(image_path):
             return base64.b64encode(image_file.read()).decode()
     except FileNotFoundError:
         return None
+
 
 def create_image_link(id):
     """Creates a direct link to the image."""
@@ -108,6 +111,7 @@ def image_formatter(id):
         # return f'<img src="data:image/jpeg;base64,{image_base64(image_data)}" width="150"/>'
     else:
         return "No image"
+
 
 def encode_image(image_file):
     with open(image_file, 'rb') as f:
@@ -241,35 +245,49 @@ def render_content(n_intervals, tab):
                 # Message box
                 html.Div(
                     [
-                        html.H3("Message Box", style={'textAlign': 'center'}),
+                        html.H3("", style={'textAlign': 'center'}),
                         html.Div(
                             id='message-box',
                             style={
                                 'width': '60%',
-                                'border': '2px solid blue',
-                                'padding': '20px',
-                                'border-radius': '5px',
-                                'box-shadow': '2px 2px 10px rgba(0, 0, 0, 0.1)',
-                                'background-color': '#f9f9f9',
-                                'color': 'black',
-                                'font-weight': 'bold',
-                                'font-size': '18px',
-                                'text-align': 'center',
+                                'background-color': '#F9F1A5',  #'#f9f9f9',
+                                # 'box-shadow': '2px 2px 10px rgba(0, 0, 0, 0.1)',
                                 'margin': 'auto',
+                                'padding': '10px',
+                                'border': '2px solid blue',
+                                'border-color': '#8D6F64',
+                                'border-radius': '5px',
+                                'text-align': 'center',
+                                'font-size': '20px',
+                                'font-weight': 'bold',
+                                'color': 'black',
                             },
                         ),
                         # Stockmarket trendline
                         html.H3(
-                            "Trendline monitoring",
-                            style={'textAlign': 'center', 'marginTop': '30px'},
+                            "Trendline Monitoring: Transconductance and Moving Averages",
+                            style={'textAlign': 'center', 'marginTop': '40px'},
                         ),  # , 'marginTop': '3px'
                         dcc.Graph(
                             id='stock-market-plot',
                             style={
                                 'width': '100%',
                                 'height': '600px',
-                                'marginTop': '10px',
+                                'marginTop': '0px',
                             },  # 'marginBottom': '10px'
+                            config={
+                                'displaylogo': False,
+                                'modeBarButtonsToRemove': [
+                                    'select2d',
+                                    'lasso2d',
+                                    'zoom',
+                                    'zoomIn2d',
+                                    'zoomOut2d',
+                                    'autoScale2d',
+                                    'resetScale2d',
+                                    'pan2d',
+                                ],
+                            },
                         ),
                     ]  # , #style={'width': '100%'} #, 'display': 'flex'
                 ),
@@ -552,6 +570,7 @@ def style_plot(fig):
     }
     fig.update_xaxes(**axis_setup)
     fig.update_yaxes(**axis_setup)
+
 
 # Image modal display callback
 @app.callback(
