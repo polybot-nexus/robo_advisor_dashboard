@@ -70,7 +70,7 @@ def consecutive_declines(data):
     return declines
 
 
-# Helper functions to process images
+# Helper functions to process film images
 def find_film_image(id):
     try:
         img = imageio.imread(f'assets/images/{id}_annealed_film.jpg')
@@ -151,62 +151,80 @@ server = app.server
 server.config['PROPAGATE_EXCEPTIONS'] = True
 server.config['WTF_CSRF_TIME_LIMIT'] = 3600
 
-tabs_styles = {'height': '44px'}
+
+# Container style for the entire layout
+container_style = {
+    'display': 'flex',
+    'flexDirection': 'row',
+    'height': '100vh',
+    'width': '100%',
+}
+
+# Style for the tabs container
+tabs_styles = {
+    'width': '200px',
+    'flexShrink': 0,
+    'borderRight': '1px solid #d6d6d6',
+    'backgroundColor': '#f8f9fa',
+}
+
+# Style for individual tabs
 tab_style = {
-    'borderBottom': '1px solid #d6d6d6',
-    'padding': '6px',
+    'padding': '12px 16px',
     'fontWeight': 'bold',
+    'color': '#495057',
+    'borderBottom': '1px solid #dee2e6',
+    'cursor': 'pointer',
+    'transition': 'all 0.2s ease-in-out',
 }
 
+# Style for selected tab
 tab_selected_style = {
-    'borderTop': '1px solid #d6d6d6',
-    'borderBottom': '1px solid #d6d6d6',
-    'backgroundColor': '#119DFF',
+    'padding': '12px 16px',
+    'fontWeight': 'bold',
     'color': 'white',
-    'padding': '6px',
+    'backgroundColor': '#119DFF',
+    'borderLeft': '4px solid #0066cc',
+    'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
 }
 
-app.layout = html.Div(
-    [
+# Style for the content area
+content_style = {
+    'flex': '1',
+    'padding': '20px',
+}
+
+# Layout
+app.layout = html.Div([
+    html.Div([
         dcc.Tabs(
             id="tabs-styled-with-inline",
             value='tab-1',
+            vertical=True,
             children=[
                 dcc.Tab(
-                    label='AI advisor board',
+                    label='AI Advisor Board',
                     value='tab-1',
                     style=tab_style,
                     selected_style=tab_selected_style,
                 ),
                 dcc.Tab(
-                    label='Data visualization',
+                    label='Data Visualization',
                     value='tab-2',
                     style=tab_style,
                     selected_style=tab_selected_style,
                 ),
-                # dcc.Tab(label='ML Model Evaluation and Feature Importance', value='tab-3', style=tab_style, selected_style=tab_selected_style),
             ],
             style=tabs_styles,
         ),
-        html.Div(id='tabs-content-inline'),
+        html.Div(id='tabs-content-inline', style=content_style),
         html.Div(id='hover-data-output', style={'display': 'none'}),
         dcc.Interval(
             id='page-load', interval=1, n_intervals=0, max_intervals=1
         ),
-        # dcc.Loading(
-        #     children=[
-        #         html.Div(id='results-table-div'),
-        #         dcc.Graph(id='feature-importance-plot')
-        #     ],
-        #     type="circle"
-        # )
-        # dcc.Interval(
-        #     id='interval-refresh',
-        #     interval=5*1000000,  # adjust the intervals
-        #     n_intervals=0
-        # )
-    ]
-)
+
+    ], style=container_style)
+])
 
 
 @app.callback(
@@ -239,117 +257,129 @@ def render_content(n_intervals, tab):
     )
     oect_data['image'] = oect_data['ID'].apply(create_image_link)
 
+
     if tab == 'tab-1':
-        return html.Div(
-            [
-                # Message box
-                html.Div(
-                    [
-                        html.H3("", style={'textAlign': 'center'}),
-                        html.Div(
-                            id='message-box',
-                            style={
-                                'width': '60%',
-                                'background-color': '#F9F1A5',  #'#f9f9f9',
-                                # 'box-shadow': '2px 2px 10px rgba(0, 0, 0, 0.1)',
-                                'margin': 'auto',
-                                'padding': '10px',
-                                'border': '2px solid blue',
-                                'border-color': '#8D6F64',
-                                'border-radius': '5px',
-                                'text-align': 'center',
-                                'font-size': '20px',
-                                'font-weight': 'bold',
-                                'color': 'black',
-                            },
-                        ),
-                        # Stockmarket trendline
+        return html.Div([
+            
+            # Message Box Card
+            dbc.Card(
+                dbc.CardBody([
+                    html.H3("AI Advisor Message", style={'textAlign': 'center', 'fontSize': '24px'}), 
+                    html.Div(
+                        id='message-box',
+                        style={
+                            'background-color': '#F9F1A5',
+                            'padding': '15px',
+                            'borderRadius': '5px',
+                            'textAlign': 'center',
+                            'fontSize': '20px',
+                            'fontWeight': 'bold',
+                            'color': 'black',
+                        }
+                    ),
+                ]),
+                className="mb-4",
+                style={
+                    'boxShadow': '0 4px 8px 0 rgba(0,0,0,0.2)',
+                    'width': '80%', 
+                    'margin': '20px auto'  
+                }
+            ),
+            
+            # Stock Market Plot Card
+            dbc.Card(
+                dbc.CardBody([
+                    html.H3(
+                        "Trendline Monitoring: Transconductance and Moving Averages",
+                        style={'textAlign': 'center', 'marginBottom': '20px','marginTop': '10px', 'fontSize': '24px'}
+                    ),
+                    dcc.Graph(
+                        id='stock-market-plot',
+                        style={
+                            'height': '600px', 
+                        },
+                        config={
+                            'displaylogo': False,
+                            'modeBarButtonsToRemove': [
+                                'select2d', 'lasso2d', 'zoom', 'zoomIn2d',
+                                'zoomOut2d', 'autoScale2d', 'resetScale2d', 'pan2d'
+                            ],
+                        }
+                    ),
+                ]),
+                className="mb-4",
+                style={
+                    'boxShadow': '0 4px 8px 0 rgba(0,0,0,0.2)',
+                    'width': '90%', 
+                    'margin': '30px auto'  
+                }
+            ),
+            
+
+            html.Div([
+                # ML Evaluation Card
+                dbc.Card(
+                    dbc.CardBody([
                         html.H3(
-                            "Trendline Monitoring: Transconductance and Moving Averages",
-                            style={'textAlign': 'center', 'marginTop': '40px'},
-                        ),  # , 'marginTop': '3px'
-                        dcc.Graph(
-                            id='stock-market-plot',
-                            style={
-                                'width': '100%',
-                                'height': '600px',
-                                'marginTop': '0px',
-                            },  # 'marginBottom': '10px'
-                            config={
-                                'displaylogo': False,
-                                'modeBarButtonsToRemove': [
-                                    'select2d',
-                                    'lasso2d',
-                                    'zoom',
-                                    'zoomIn2d',
-                                    'zoomOut2d',
-                                    'autoScale2d',
-                                    'resetScale2d',
-                                    'pan2d',
-                                ],
-                            },
+                            "ML Model Evaluation",
+                            style={'textAlign': 'center', 'marginBottom': '20px','marginTop': '10px', 'fontSize': '24px'}
                         ),
-                    ]  # , #style={'width': '100%'} #, 'display': 'flex'
-                ),
-                html.Div(
-                    [
                         html.Div(
-                            [
-                                # Title for the ML comparison table
-                                html.H3(
-                                    "ML Model Evaluation",
-                                    style={'textAlign': 'center'},
-                                ),
-                                html.Div(
-                                    id='results-table-div',
-                                    style={
-                                        'width': '100%',
-                                        'display': 'block',
-                                        'margin-top': '50px',
-                                        'margin-left': '30px',
-                                        'height': '500px',
-                                        'overflow': 'auto',
-                                    },
-                                ),
-                            ],
+                            id='results-table-div',
                             style={
-                                'width': '48%',
-                                'display': 'inline-block',
-                                'verticalAlign': 'top',
-                                'padding-left': '20px',
-                            },
+                                'height': '450px',
+                                'overflow': 'auto',
+                                'fontSize': '18px',  
+                                'marginTop': '20px',  
+                            }
                         ),
-                        # Feature importance plot with a title
-                        html.Div(
-                            [
-                                html.H3(
-                                    "SHAP Summary Plot",
-                                    style={'textAlign': 'center'},
-                                ),
-                                dcc.Graph(
-                                    id='feature-importance-plot',
-                                    style={
-                                        'width': '100%',
-                                        'display': 'inline-block',
-                                        'verticalAlign': 'top',
-                                    },
-                                ),
-                            ],
-                            style={
-                                'width': '48%',
-                                'display': 'inline-block',
-                                'verticalAlign': 'top',
-                            },
-                        ),
-                    ],
+                    ]),
                     style={
-                        'width': '100%',
-                        'display': 'flex',
-                        'justify-content': 'space-between',
-                    },
+                        'width': '48%',
+                        'display': 'inline-block',
+                        'verticalAlign': 'top',
+                        'boxShadow': '0 4px 8px 0 rgba(0,0,0,0.2)',
+                        'margin': '0 10px'
+                    }
                 ),
-            ]
-        )
+                
+                # SHAP Plot Card
+                dbc.Card(
+                    dbc.CardBody([
+                        html.H3(
+                            "SHAP Summary Plot",
+                            style={'textAlign': 'center', 'marginBottom': '20px','marginTop': '10px', 'fontSize': '24px'}
+                        ),
+                        dcc.Graph(
+                            id='feature-importance-plot',
+                            style={
+                                'height': '450px',
+                                'marginTop': '20px'
+                            }
+                        ),
+                    ]),
+                    style={
+                        'width': '48%',  
+                        'display': 'inline-block',
+                        'verticalAlign': 'top',
+                        'boxShadow': '0 4px 8px 0 rgba(0,0,0,0.2)',
+                        'margin': '0 10px'
+                    }
+                ),
+            ], style={
+                'width': '95%',  
+                'display': 'flex',
+                'justifyContent': 'center',
+                'marginTop': '20px',
+                'margin': '30px auto', 
+                'paddingBottom': '30px'
+            })
+        ], 
+        style={
+        'padding': '20px', 
+        'backgroundColor': '#f8f9fa',  
+        'minHeight': '100vh'  
+        }),
 
     elif tab == 'tab-2':
         return html.Div(
@@ -455,8 +485,6 @@ def render_content(n_intervals, tab):
 
 
 ############################################################################################################
-
-
 # Callbacks for dynamic updating of the scatterplots
 @app.callback(
     Output('concentration-plot', 'figure'),
@@ -543,7 +571,6 @@ def update_graphs(rows):
 #############################################################################################################
 # Callback to generate and display the ML models comparison plot
 
-
 def style_plot(fig):
     fig.update_traces(
         marker=dict(size=12, line=dict(width=2, color='DarkSlateGrey'))
@@ -627,12 +654,8 @@ def update_ml_models_table(filename):
 
     table_data.sort(key=lambda x: model_order.index(x["Model"]))
 
-    min_rmse = min(table_data, key=lambda x: float(x["Average Test RMSE"]))[
-        "Average Test RMSE"
-    ]
-    min_std_dev = min(table_data, key=lambda x: float(x["Test RMSE Std Dev"]))[
-        "Test RMSE Std Dev"
-    ]
+    min_rmse = min(table_data, key=lambda x: float(x["Average Test RMSE"]))["Average Test RMSE"]
+    min_std_dev = min(table_data, key=lambda x: float(x["Test RMSE Std Dev"]))["Test RMSE Std Dev"]
 
     algorithm_colors = {
         "Random Forest": "mediumseagreen",
@@ -652,28 +675,81 @@ def update_ml_models_table(filename):
         for algo, color in algorithm_colors.items()
     ]
 
+    style_data_conditional.extend([
+        {
+            'if': {
+                'filter_query': f'{{Average Test RMSE}} = "{min_rmse}"',
+                'column_id': 'Average Test RMSE'
+            },
+            'fontWeight': 'bold',
+        },
+        {
+            'if': {
+                'filter_query': f'{{Test RMSE Std Dev}} = "{min_std_dev}"',
+                'column_id': 'Test RMSE Std Dev'
+            },
+            'fontWeight': 'bold',
+        }
+    ])
+
     results_table = dash_table.DataTable(
         data=table_data,
         columns=[
-            {"name": "Model", "id": "Model"},
-            {"name": "Average Test RMSE", "id": "Average Test RMSE"},
-            {"name": "Test RMSE Std Dev", "id": "Test RMSE Std Dev"},
-            {"name": "Train-Test RMSE Diff", "id": "Train-Test RMSE Diff"},
+            {
+                "name": ["Model\n"],
+                "id": "Model"
+            },
+            {
+                "name": ["Average\nTest RMSE"],
+                "id": "Average Test RMSE"
+            },
+            {
+                "name": ["Test RMSE\nStd Dev"],
+                "id": "Test RMSE Std Dev"
+            },
+            {
+                "name": ["Train-Test\nRMSE Diff"],
+                "id": "Train-Test RMSE Diff"
+            },
         ],
-        style_table={'overflowX': 'auto', 'width': '100%'},
+        style_table={
+            'overflowX': 'auto',
+            'minWidth': '100%',
+            'width': '100%',
+            'maxHeight': '500px',
+        },
         style_cell={
             'textAlign': 'center',
-            'padding': '10px',
-            'fontSize': '16px',
+            'padding': '15px',
+            'fontSize': '20px',
+            'font-family': 'Arial',
+            'minWidth': '150px',
+            'width': '25%',
+            'maxWidth': '25%',
         },
-        style_header={'fontWeight': 'bold', 'fontSize': '18px'},
+        style_header={
+            'backgroundColor': '#f4f4f4',
+            'fontWeight': 'bold',
+            'fontSize': '16px',
+            'height': 'auto',
+            'whiteSpace': 'pre-line',
+            'padding': '10px',
+            'textAlign': 'center',
+            'lineHeight': '1.2'
+        },
+        style_data={
+            'whiteSpace': 'normal',
+            'height': 'auto',
+        },
         style_data_conditional=style_data_conditional,
+        merge_duplicate_headers=True,
+        fixed_rows={'headers': True},
     )
+    
     return [results_table]
 
-
 def update_feature_importance_plot():
-    # # Load precomputed SHAP plot from JSON
+    # Load precomputed SHAP plot from JSON
     with open("shap_plot.json", "r") as f:
         feature_importance_fig = pio.from_json(f.read())
 
@@ -684,34 +760,19 @@ def update_feature_importance_plot():
     )
     feature_importance_fig.update_layout(
         title="",
-        title_font=dict(size=1),
-        xaxis=dict(
-            title="SHAP Value",
-            title_font=dict(size=16),
-            tickfont=dict(size=16),
-        ),
-        yaxis=dict(
-            title="Feature", title_font=dict(size=16), tickfont=dict(size=16)
-        ),
-        margin=dict(l=50, r=50, t=20, b=40),
-        height=500,
-        width=800,
-    )
-
-    feature_importance_fig.update_layout(
-        plot_bgcolor='rgba(245, 245, 245, 0.8)',
-        paper_bgcolor='rgba(255, 255, 255, 0.8)',
+        plot_bgcolor='white',
+        paper_bgcolor='white',
         xaxis=dict(
             title="SHAP Value",
             title_font=dict(size=20),
             tickfont=dict(size=20),
-            gridcolor='white',
+            gridcolor='lightgrey',
         ),
         yaxis=dict(
             title="Feature",
             title_font=dict(size=20),
             tickfont=dict(size=20),
-            gridcolor='white',
+            gridcolor='lightgrey',
         ),
         coloraxis_colorbar=dict(
             title="Feature Value",
@@ -719,8 +780,9 @@ def update_feature_importance_plot():
             tickfont=dict(size=16),
         ),
         margin=dict(l=50, r=50, t=20, b=40),
-        height=500,
-        width=800,
+        height=None,
+        width=None,
+        autosize=True
     )
 
     feature_importance_fig.update_traces(marker=dict(size=20, opacity=0.8))
@@ -744,9 +806,9 @@ def update_feature_importance_plot():
 )
 def update_charts(relayout_data):
     print("relayout_data:", relayout_data)  # Debug print
-    if relayout_data and 'xaxis2.range' in relayout_data:
-        start_idx = int(float(relayout_data['xaxis2.range'][0]))
-        end_idx = int(float(relayout_data['xaxis2.range'][1]))
+    if relayout_data and 'xaxis.range' in relayout_data:
+        start_idx = 0 #int(float(relayout_data['xaxis.range'][0]))
+        end_idx = int(float(relayout_data['xaxis.range'][1]))
         filtered_data = oect_data.iloc[start_idx:end_idx]
         print('Range selected:', start_idx, '-', end_idx)
         #    print('Filtered data shape:', filtered_data)
@@ -772,7 +834,6 @@ def update_charts(relayout_data):
         update_feature_importance_plot(),
         update_message_box(oect_data),
     )
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)

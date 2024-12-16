@@ -237,7 +237,7 @@ def create_plotly_stock_market_plot(oect_data):
     fig.update_layout(
         # Make plot fill the container width
         width=None,
-        height=600,
+        height=None,
         autosize=True,
         margin=dict(l=10, r=100, t=10, b=50),
         # Plots
@@ -319,7 +319,7 @@ def create_plotly_stock_market_plot(oect_data):
             }
         )
 
-    x0, x1, src0 = 0, 0, df['source'][0]
+    x0, x1, src0 = 0, 0, df['source'].iloc[0] if not df['source'].empty else 0 #df['source'][0]
     for src in df['source'][1:]:
         x1 += 1
         if src != src0:

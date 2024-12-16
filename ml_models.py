@@ -212,7 +212,7 @@ def evaluate_ml_models(oect_data):
 def plot_ml_comparison(results):
     """Function to plot model comparison"""
     models = list(results.keys())
-    fig, axes = plt.subplots(3, 2, figsize=(12, 16), sharex=True, sharey=True)
+    fig, axes = plt.subplots(3, 2, figsize=(10, 12), sharex=True, sharey=True)
     axes = axes.flatten()
     width = 0.35
 
@@ -243,7 +243,7 @@ def plot_ml_comparison(results):
 
     fig.supxlabel('CV Fold Number', fontsize=14)
     fig.supylabel('RMSE', fontsize=14)
-    fig.tight_layout(rect=[0, 0.02, 1, 0.97])
+    fig.tight_layout(rect=[0.03, 0.03, 0.97, 0.97])
 
     for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])
@@ -371,35 +371,38 @@ def shapley_analysis_plotly(oect_data):
     )
 
     fig.update_layout(
-        plot_bgcolor='rgba(245, 245, 245, 0.8)',
-        paper_bgcolor='rgba(255, 255, 255, 0.8)',
+        plot_bgcolor='white',
+        paper_bgcolor='white',
         xaxis=dict(
             title="SHAP Value",
-            title_font=dict(size=20),
-            tickfont=dict(size=30),
-            gridcolor='white',
+            title_font=dict(size=12),
+            tickfont=dict(size=10),
+            showgrid=True,
+            gridcolor='lightgrey',
         ),
         yaxis=dict(
             title="Feature",
             title_font=dict(size=20),
             tickfont=dict(size=30),
-            gridcolor='white',
+            showgrid=True,
+            gridcolor='lightgrey',
         ),
         coloraxis_colorbar=dict(
             title="Feature Value",
-            title_font=dict(size=18),
-            tickfont=dict(size=16),
+            title_font=dict(size=12),
+            tickfont=dict(size=10),
         ),
-        margin=dict(l=50, r=50, t=20, b=40),
-        height=500,
-        width=800,
+        margin=dict(l=40, r=20, t=40, b=40),
+        height=400,
+        width=None,
+        autosize=True
     )
 
-    fig.update_traces(marker=dict(size=20, opacity=0.8))
+    fig.update_traces(marker=dict(size=12, opacity=0.7))
 
     fig.add_vline(
         x=0,
-        line=dict(color="black", width=2, dash="dash"),
+        line=dict(color="black", width=1, dash="dash"),
     )
 
     return fig
