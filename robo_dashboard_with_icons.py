@@ -144,7 +144,10 @@ df['image'] = df['ID'].apply(create_image_link)
 
 
 # Initialize Dash app
-app = dash.Dash(__name__, suppress_callback_exceptions=True)
+app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[
+        dbc.themes.BOOTSTRAP,
+        'https://use.fontawesome.com/releases/v5.15.4/css/all.css'
+    ])
 server = app.server
 
 # Increase the timeout limit
@@ -176,9 +179,9 @@ tab_style = {
     'borderBottom': '1px solid #dee2e6',
     'cursor': 'pointer',
     'transition': 'all 0.2s ease-in-out',
+    'fontSize': '28px', 
 }
 
-# Style for selected tab
 tab_selected_style = {
     'padding': '12px 16px',
     'fontWeight': 'bold',
@@ -186,15 +189,62 @@ tab_selected_style = {
     'backgroundColor': '#119DFF',
     'borderLeft': '4px solid #0066cc',
     'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
+    'fontSize': '28px', 
 }
+
 
 # Style for the content area
 content_style = {
     'flex': '1',
     'padding': '20px',
 }
+# Style for expanded tabs container
+tabs_styles_expanded = {
+    'width': '200px',  # Expanded width
+    'flexShrink': 0,
+    'borderRight': '1px solid #d6d6d6',
+    'backgroundColor': '#f8f9fa',
+    'transition': 'width 0.3s ease-in-out',
+}
+# # Layout
+# app.layout = html.Div([
+#     html.Div([
+#         dcc.Tabs(
+#             id="tabs-styled-with-inline",
+#             value='tab-1',
+#             vertical=True,
+#             children=[
+#                 dcc.Tab(
+#                     #label='AI Advisor Board',
+#                     className="fas fa-globe",
+#                     value='tab-1',                    
+#                     style=tab_style,
+#                     selected_style=tab_selected_style,
+#                     children= [
+#                         html.P('AI Advisor Board')
+#                     ]
+#                 ),
+#                 dcc.Tab(
+#                     #label='Data Visualization',
+#                     className="fas fa-chart-area",
+#                     value='tab-2',
+#                     style=tab_style,
+#                     selected_style=tab_selected_style,
+#                     children= [
+#                         html.P('Data Visualization')
+#                     ]
+#                 ),
+#             ],
+#             style=tabs_styles,
+#         ),
+#         html.Div(id='tabs-content-inline', style=content_style),
+#         html.Div(id='hover-data-output', style={'display': 'none'}),
+#         dcc.Interval(
+#             id='page-load', interval=1, n_intervals=0, max_intervals=1
+#         ),
 
-# Layout
+#     ], style=container_style)
+# ])
 app.layout = html.Div([
     html.Div([
         dcc.Tabs(
@@ -203,16 +253,26 @@ app.layout = html.Div([
             vertical=True,
             children=[
                 dcc.Tab(
-                    label='AI Advisor Board',
-                    value='tab-1',
+                    className="fas fa-globe",
+                    value='tab-1',                    
                     style=tab_style,
                     selected_style=tab_selected_style,
+                    children=[
+                        html.P('AI Advisor Board', 
+                              id='tab1-label',
+                              style={'display': 'none', 'margin': '0 0 0 10px'})
+                    ]
                 ),
                 dcc.Tab(
-                    label='Data Visualization',
+                    className="fas fa-chart-area",
                     value='tab-2',
                     style=tab_style,
                     selected_style=tab_selected_style,
+                    children=[
+                        html.P('Data Visualization',
+                              id='tab2-label',
+                              style={'display': 'none', 'margin': '0 0 0 10px'})
+                    ]
                 ),
             ],
             style=tabs_styles,
@@ -222,7 +282,6 @@ app.layout = html.Div([
         dcc.Interval(
             id='page-load', interval=1, n_intervals=0, max_intervals=1
         ),
-
     ], style=container_style)
 ])
 
@@ -260,7 +319,6 @@ def render_content(n_intervals, tab):
 
     if tab == 'tab-1':
         return html.Div([
-            
             # Message Box Card
             dbc.Card(
                 dbc.CardBody([
@@ -811,7 +869,7 @@ def update_charts(relayout_data):
         end_idx = int(float(relayout_data['xaxis.range'][1]))
         filtered_data = oect_data.iloc[start_idx:end_idx]
         print('Range selected:', start_idx, '-', end_idx)
-        #    print('Filtered data shape:', filtered_data)
+        print('Filtered data shape:', filtered_data)
 
         fig = create_plotly_stock_market_plot(filtered_data)
         fig.update_layout(xaxis_range=[start_idx, end_idx])
@@ -834,6 +892,49 @@ def update_charts(relayout_data):
         update_feature_importance_plot(),
         update_message_box(oect_data),
     )
+
+# # Callbacks
+# @app.callback(
+#     [Output('sidebar', 'style'),
+#      Output('sidebar', 'className'),
+#      Output('sidebar-state', 'data')],
+#     [Input('tab-1-content', 'n_clicks'),
+#      Input('tab-2-content', 'n_clicks')],
+#     [State('sidebar-state', 'data')]
+# )
+# def toggle_sidebar(tab1_clicks, tab2_clicks, sidebar_state):
+#     ctx = dash.callback_context
+    
+#     if not ctx.triggered:
+#         return tabs_styles, '', sidebar_state
+    
+#     triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
+#     clicked_tab = triggered_id.replace('-content', '')
+    
+#     # If clicking the same tab that's already active
+#     if sidebar_state['active_tab'] == clicked_tab:
+#         expanded = not sidebar_state.get('expanded', False)
+#     else:
+#         expanded = True
+        
+#     sidebar_state['expanded'] = expanded
+#     sidebar_state['active_tab'] = clicked_tab
+    
+#     if expanded:
+#         return tabs_styles_expanded, 'sidebar-expanded', sidebar_state
+#     return tabs_styles, '', sidebar_state
+
+# @app.callback(
+#     [Output('tab-1-content', 'className'),
+#      Output('tab-2-content', 'className')],
+#     [Input('sidebar-state', 'data')]
+# )
+# def update_active_tab(sidebar_state):
+#     active_tab = sidebar_state.get('active_tab', 'tab-1')
+#     return [
+#         'tab-content active' if tab == active_tab else 'tab-content'
+#         for tab in ['tab-1', 'tab-2']
+#     ]
 
 if __name__ == '__main__':
     app.run_server(debug=True)

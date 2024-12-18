@@ -1,0 +1,18 @@
+body {
+    font-family: "Ubuntu", sans-serif;
+}
+
+.custom-tab {
+    color:  #7F7F7F;
+    font-size: large;
+    padding: 10px 25px !important;
+    font-weight: normal;
+}
+
+.custom-tab--selected {
+    font-size: large;
+    padding: 10px 25px !important;
+    border-top: 2px solid #3c6382 !important;
+    color:  #3c6382 !important;
+    font-weight: 600;
+}

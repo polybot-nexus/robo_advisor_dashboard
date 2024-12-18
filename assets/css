@@ -1,0 +1,58 @@
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <style>
+            .sidebar-tabs {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                padding: 20px 0;
+            }
+            
+            .tab-content {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding: 12px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                border-radius: 8px;
+                margin: 0 8px;
+            }
+            
+            .tab-content:hover {
+                background-color: #e9ecef;
+            }
+            
+            .tab-content.active {
+                background-color: #119DFF;
+                color: white;
+            }
+            
+            .tab-label {
+                white-space: nowrap;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            
+            .sidebar-expanded .tab-label {
+                display: inline !important;
+                opacity: 1;
+            }
+        </style>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
