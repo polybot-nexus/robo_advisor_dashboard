@@ -50,9 +50,9 @@ def update_message_box(oect_data):
     # if consecutive_declines(slopes) >= 3:
     #     return "The transconductance trendline slope is showing a downward trajectory. Consider Changing strategy."
     except:
-        return "AI-advisor will display a message if any workflow modification is required."
+        return None # "AI-advisor will display a message if any workflow modification is required."
 
-    return "AI-advisor will display a message if any workflow modification is required."
+    return None #"AI-advisor will display a message if any workflow modification is required."
 
 
 def consecutive_declines(data):
@@ -119,6 +119,7 @@ def encode_image(image_file):
     return f'data:image/jpeg;base64,{encoded}'
 
 
+# Loading the highthroughput data
 data_file_path = 'datasets/oect_summary_posted_rf__plus_ml_combined.csv'
 oect_data = pd.read_csv(
     'datasets/oect_summary_posted_rf__plus_ml_combined.csv'
@@ -143,11 +144,11 @@ df = oect_data.copy()
 df['image'] = df['ID'].apply(create_image_link)
 
 
-# Initialize Dash app
+# Dash app initialization
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
 
-# Increase the timeout limit
+# Timeout limit
 server.config['PROPAGATE_EXCEPTIONS'] = True
 server.config['WTF_CSRF_TIME_LIMIT'] = 3600
 
@@ -160,15 +161,21 @@ container_style = {
     'width': '100%',
 }
 
-# Style for the tabs container
-tabs_styles = {
+sidebar_style = {
+    'display': 'flex',
+    'flexDirection': 'column',
     'width': '200px',
-    'flexShrink': 0,
     'borderRight': '1px solid #d6d6d6',
     'backgroundColor': '#f8f9fa',
 }
 
 # Style for individual tabs
+tabs_styles = {
+    #'width': '200px',
+    'flexGrow': 1,
+    #'borderRight': '1px solid #d6d6d6',
+    'backgroundColor': '#f8f9fa',
+}
 tab_style = {
     'padding': '12px 16px',
     'fontWeight': 'bold',
@@ -178,7 +185,7 @@ tab_style = {
     'transition': 'all 0.2s ease-in-out',
 }
 
-# Style for selected tab
+# Style of the tabs 1&2
 tab_selected_style = {
     'padding': '12px 16px',
     'fontWeight': 'bold',
@@ -188,15 +195,37 @@ tab_selected_style = {
     'boxShadow': '0 2px 4px rgba(0,0,0,0.1)',
 }
 
-# Style for the content area
+# Style of the content area
 content_style = {
     'flex': '1',
     'padding': '20px',
 }
 
-# Layout
+# Style of the logo container
+logo_style = {
+    'padding': '10px',
+    'backgroundColor': '#f8f9fa',  
+    'borderBottom': '1px solid #d6d6d6',
+    'display': 'flex',
+    'justifyContent': 'center',
+    'alignItems': 'center'
+}
+
+
 app.layout = html.Div([
     html.Div([
+        # Logo container
+        html.Div([
+            html.Img(
+                src='/assets/polybot_logo.png', 
+                style={
+                    'height': '200px',  
+                    'width': 'auto',
+                }
+            )
+        ], style=logo_style),
+        
+        # Tab container
         dcc.Tabs(
             id="tabs-styled-with-inline",
             value='tab-1',
@@ -217,14 +246,13 @@ app.layout = html.Div([
             ],
             style=tabs_styles,
         ),
+        ], style=sidebar_style),
         html.Div(id='tabs-content-inline', style=content_style),
         html.Div(id='hover-data-output', style={'display': 'none'}),
         dcc.Interval(
             id='page-load', interval=1, n_intervals=0, max_intervals=1
         ),
-
     ], style=container_style)
-])
 
 
 @app.callback(
