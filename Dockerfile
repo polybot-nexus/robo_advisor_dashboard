@@ -1,5 +1,5 @@
 FROM python:3.10
-WORKDIR /app
+WORKDIR /
 COPY . .
 RUN pip install -r requirements.txt
-CMD ["python", "app.py"]
+CMD ["python", "robo_dashboard.py"]
