@@ -18,3 +18,8 @@ pip install -r requirements.txt
 python robo_advisor.py 
 
 ```
+
+3. **Dashboard**:
+A screenshot of the dashboard is shown below:
+
+![Robo Advisor Dashboard](./assets/dashboard_screenshot.png)
