@@ -3,12 +3,11 @@ import matplotlib
 import pandas as pd
 from dash import dash_table, dcc, html
 from dash.dependencies import Input, Output, State
-
+import os
 matplotlib.use('Agg')
 import base64
 import json
 from io import BytesIO
-
 import dash_bootstrap_components as dbc
 import imageio
 import plotly.express as px
@@ -69,7 +68,6 @@ def consecutive_declines(data):
 
     return declines
 
-
 # Helper functions to process film images
 def find_film_image(id):
     try:
@@ -82,12 +80,9 @@ def find_film_image(id):
         # print(id)
         return None
 
-
-# Helper functions to handle images
 def find_film_image_path(id):
     """Finds the image path based on the given ID."""
     return f'assets/images/{id}_annealed_film.jpg'
-
 
 def image_base64(image_path):
     """Encodes the image to Base64 format."""
@@ -97,12 +92,10 @@ def image_base64(image_path):
     except FileNotFoundError:
         return None
 
-
 def create_image_link(id):
     """Creates a direct link to the image."""
     image_path = f'assets/images/{id}_annealed_film.jpg'
     return f'[View Image]({image_path})'
-
 
 def image_formatter(id):
     image_data = find_film_image(id)
@@ -111,7 +104,6 @@ def image_formatter(id):
         # return f'<img src="data:image/jpeg;base64,{image_base64(image_data)}" width="150"/>'
     else:
         return "No image"
-
 
 def encode_image(image_file):
     with open(image_file, 'rb') as f:
@@ -152,7 +144,6 @@ server = app.server
 server.config['PROPAGATE_EXCEPTIONS'] = True
 server.config['WTF_CSRF_TIME_LIMIT'] = 3600
 
-
 # Container style for the entire layout
 container_style = {
     'display': 'flex',
@@ -179,6 +170,7 @@ tabs_styles = {
 tab_style = {
     'padding': '12px 16px',
     'fontWeight': 'bold',
+    'fontSize': '20px',
     'color': '#495057',
     'borderBottom': '1px solid #dee2e6',
     'cursor': 'pointer',
@@ -189,6 +181,7 @@ tab_style = {
 tab_selected_style = {
     'padding': '12px 16px',
     'fontWeight': 'bold',
+    'fontSize': '20px',
     'color': 'white',
     'backgroundColor': '#119DFF',
     'borderLeft': '4px solid #0066cc',
@@ -864,5 +857,11 @@ def update_charts(relayout_data):
         update_message_box(oect_data),
     )
 
+# if __name__ == '__main__':
+#     app.run_server(debug=True)
+
+# For render deployment
+server = app.server
+
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(host='0.0.0.0', port=int(os.environ.get('PORT', 3000)))
