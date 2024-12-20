@@ -785,32 +785,32 @@ def update_feature_importance_plot():
         paper_bgcolor='white',
         xaxis=dict(
             title="SHAP Value",
-            title_font=dict(size=20),
-            tickfont=dict(size=20),
+            title_font=dict(size=12),
+            tickfont=dict(size=10),
             gridcolor='lightgrey',
         ),
         yaxis=dict(
             title="Feature",
             title_font=dict(size=20),
-            tickfont=dict(size=20),
+            tickfont=dict(size=30),
             gridcolor='lightgrey',
         ),
         coloraxis_colorbar=dict(
             title="Feature Value",
-            title_font=dict(size=18),
-            tickfont=dict(size=16),
+            title_font=dict(size=12),
+            tickfont=dict(size=10),
         ),
-        margin=dict(l=50, r=50, t=20, b=40),
-        height=None,
+        margin=dict(l=40, r=20, t=40, b=40),
+        height=400,
         width=None,
         autosize=True
     )
 
-    feature_importance_fig.update_traces(marker=dict(size=20, opacity=0.8))
+    feature_importance_fig.update_traces(marker=dict(size=12, opacity=0.7))
 
     feature_importance_fig.add_vline(
         x=0,
-        line=dict(color="black", width=2, dash="dash"),
+        line=dict(color="black", width=1, dash="dash"),
     )
     return feature_importance_fig
 
