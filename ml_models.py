@@ -375,25 +375,25 @@ def shapley_analysis_plotly(oect_data):
         paper_bgcolor='white',
         xaxis=dict(
             title="SHAP Value",
-            title_font=dict(size=12),
-            tickfont=dict(size=10),
+            title_font=dict(size=20),
+            tickfont=dict(size=20),
             showgrid=True,
             gridcolor='lightgrey',
         ),
         yaxis=dict(
             title="Feature",
             title_font=dict(size=20),
-            tickfont=dict(size=30),
+            tickfont=dict(size=20),
             showgrid=True,
             gridcolor='lightgrey',
         ),
         coloraxis_colorbar=dict(
             title="Feature Value",
-            title_font=dict(size=12),
-            tickfont=dict(size=10),
+            title_font=dict(size=18),
+            tickfont=dict(size=16),
         ),
-        margin=dict(l=40, r=20, t=40, b=40),
-        height=400,
+        margin=dict(l=50, r=50, t=20, b=40),
+        height=None,
         width=None,
         autosize=True
     )

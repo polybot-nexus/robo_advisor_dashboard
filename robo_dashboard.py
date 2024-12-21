@@ -204,7 +204,6 @@ logo_style = {
     'alignItems': 'center'
 }
 
-
 app.layout = html.Div([
     html.Div([
         # Logo container
@@ -334,9 +333,7 @@ def render_content(n_intervals, tab):
                     'width': '90%', 
                     'margin': '30px auto'  
                 }
-            ),
-            
-
+            ),            
             html.Div([
                 # ML Evaluation Card
                 dbc.Card(
@@ -345,14 +342,22 @@ def render_content(n_intervals, tab):
                             "ML Model Evaluation",
                             style={'textAlign': 'center', 'marginBottom': '20px','marginTop': '10px', 'fontSize': '24px'}
                         ),
-                        html.Div(
-                            id='results-table-div',
-                            style={
-                                'height': '450px',
-                                'overflow': 'auto',
-                                'fontSize': '18px',  
-                                'marginTop': '20px',  
-                            }
+
+                        dcc.Loading(
+                            id="loading-results",
+                            type="circle",  # Spinner type (circle, default, etc.)
+                            children=[
+                                html.Div(
+                                    id='results-container',  # Static container (important for Loading)
+                                    children=html.Div(id='results-table-div'),  # Dynamic content inside
+                                    style={
+                                        'height': '450px',
+                                        'overflow': 'auto',
+                                        'fontSize': '18px',  
+                                        'marginTop': '20px',  
+                                    }
+                                )
+                            ],
                         ),
                     ]),
                     style={
@@ -774,34 +779,29 @@ def update_feature_importance_plot():
     with open("shap_plot.json", "r") as f:
         feature_importance_fig = pio.from_json(f.read())
 
-    feature_importance_fig.update_traces(marker=dict(size=16, opacity=0.8))
-    feature_importance_fig.add_vline(
-        x=0,
-        line=dict(color="black", width=2, dash="dash"),
-    )
     feature_importance_fig.update_layout(
         title="",
         plot_bgcolor='white',
         paper_bgcolor='white',
         xaxis=dict(
             title="SHAP Value",
-            title_font=dict(size=12),
-            tickfont=dict(size=10),
+            title_font=dict(size=20),
+            tickfont=dict(size=20),
             gridcolor='lightgrey',
         ),
         yaxis=dict(
             title="Feature",
             title_font=dict(size=20),
-            tickfont=dict(size=30),
+            tickfont=dict(size=20),
             gridcolor='lightgrey',
         ),
         coloraxis_colorbar=dict(
             title="Feature Value",
-            title_font=dict(size=12),
-            tickfont=dict(size=10),
+            title_font=dict(size=18),
+            tickfont=dict(size=16),
         ),
-        margin=dict(l=40, r=20, t=40, b=40),
-        height=400,
+        margin=dict(l=50, r=50, t=20, b=40),
+        height=None,
         width=None,
         autosize=True
     )
@@ -814,7 +814,6 @@ def update_feature_importance_plot():
     )
     return feature_importance_fig
 
-
 @app.callback(
     [
         Output('stock-market-plot', 'figure'),
@@ -826,12 +825,12 @@ def update_feature_importance_plot():
     prevent_initial_call=True,
 )
 def update_charts(relayout_data):
-    print("relayout_data:", relayout_data)  # Debug print
+    # print("relayout_data:", relayout_data)  # Debug print
     if relayout_data and 'xaxis.range' in relayout_data:
         start_idx = 0 #int(float(relayout_data['xaxis.range'][0]))
         end_idx = int(float(relayout_data['xaxis.range'][1]))
         filtered_data = oect_data.iloc[start_idx:end_idx]
-        print('Range selected:', start_idx, '-', end_idx)
+        # print('Range selected:', start_idx, '-', end_idx)
         #    print('Filtered data shape:', filtered_data)
 
         fig = create_plotly_stock_market_plot(filtered_data)
