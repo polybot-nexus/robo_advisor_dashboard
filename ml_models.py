@@ -331,7 +331,7 @@ def shapley_analysis_plotly(oect_data):
     shap_df = pd.DataFrame(
         shap_values,
         columns=[
-            'OMIEC concentration',
+            'MIECP concentration',
             'Substrate features',
             'Coating speed',
             'Coating temperature',
@@ -341,7 +341,7 @@ def shapley_analysis_plotly(oect_data):
     feature_df = pd.DataFrame(
         X.values,
         columns=[
-            'OMIEC concentration',
+            'MIECP concentration',
             'Substrate features',
             'Coating speed',
             'Coating temperature',

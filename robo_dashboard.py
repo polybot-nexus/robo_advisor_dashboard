@@ -856,11 +856,11 @@ def update_charts(relayout_data):
         update_message_box(oect_data),
     )
 
-# if __name__ == '__main__':
-#     app.run_server(debug=True)
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
 # For render deployment
-server = app.server
+# server = app.server
 
-if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=int(os.environ.get('PORT', 3000)))
+# if __name__ == '__main__':
+#     app.run_server(host='0.0.0.0', port=int(os.environ.get('PORT', 3000)))
