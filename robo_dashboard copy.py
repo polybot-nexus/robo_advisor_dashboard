@@ -45,7 +45,7 @@ def update_message_box(oect_data):
         df = pd.concat([df, macd], axis=1)
         # print('MACD', df['MACDh_10_20_8'].values)
         if df['MACDh_10_20_8'].values[-1] < 0:
-            return f"The MACD indicator is showing a downward trajectory at sample number {df['MACDh_10_20_8'].values[-1]}. Consider changing strategy by selecting different ML model or modify the parameter range."
+            return "The MACD indicator is showing a downward trajectory. Consider changing strategy by selecting different ML model or modify the parameter range."
     # if consecutive_declines(slopes) >= 3:
     #     return "The transconductance trendline slope is showing a downward trajectory. Consider Changing strategy."
     except:
@@ -162,6 +162,31 @@ class DataManager:
 
 # Initialize the global data manager
 data_manager = DataManager('datasets/oect_summary_posted_rf__plus_ml_combined.csv')
+
+# Loading the highthroughput data
+# data_file_path = 'datasets/oect_summary_posted_rf__plus_ml_combined.csv'
+# oect_data = pd.read_csv(
+#     'datasets/oect_summary_posted_rf__plus_ml_combined.csv'
+# )
+# oect_data['coating_on_top.sol_label'] = oect_data[
+#     'coating_on_top.sol_label'
+# ].map(lambda x: x.lstrip('mg/ml').rstrip('mg/ml'))
+# oect_data['coating_on_top.substrate_label'] = oect_data[
+#     'coating_on_top.substrate_label'
+# ].map(lambda x: x.lstrip('nm').rstrip('nm'))
+# oect_data['coating_on_top.sol_label'] = pd.to_numeric(
+#     oect_data['coating_on_top.sol_label']
+# )
+# oect_data['coating_on_top.substrate_label'] = pd.to_numeric(
+#     oect_data['coating_on_top.substrate_label']
+# )
+# oect_data['coating_on_top.vel'] = pd.to_numeric(
+#     oect_data['coating_on_top.vel']
+# )
+# oect_data['coating_on_top.T'] = pd.to_numeric(oect_data['coating_on_top.T'])
+# df = oect_data.copy()
+# df['image'] = df['ID'].apply(create_image_link)
+
 
 # Dash app initialization
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
@@ -283,6 +308,30 @@ app.layout = html.Div([
 def render_content(n_intervals, tab):
     oect_data = data_manager.get_data()
     
+    # pd.read_csv(
+    #     'datasets/oect_summary_posted_rf__plus_ml_combined.csv'
+    # )
+    # oect_data['coating_on_top.sol_label'] = oect_data[
+    #     'coating_on_top.sol_label'
+    # ].map(lambda x: x.lstrip('mg/ml').rstrip('mg/ml'))
+    # oect_data['coating_on_top.substrate_label'] = oect_data[
+    #     'coating_on_top.substrate_label'
+    # ].map(lambda x: x.lstrip('nm').rstrip('nm'))
+    # oect_data['coating_on_top.sol_label'] = pd.to_numeric(
+    #     oect_data['coating_on_top.sol_label']
+    # )
+    # oect_data['coating_on_top.substrate_label'] = pd.to_numeric(
+    #     oect_data['coating_on_top.substrate_label']
+    # )
+    # oect_data['coating_on_top.vel'] = pd.to_numeric(
+    #     oect_data['coating_on_top.vel']
+    # )
+    # oect_data['coating_on_top.T'] = pd.to_numeric(
+    #     oect_data['coating_on_top.T']
+    # )
+    # oect_data['image'] = oect_data['ID'].apply(create_image_link)
+
+
     if tab == 'tab-1':
         return html.Div([
             

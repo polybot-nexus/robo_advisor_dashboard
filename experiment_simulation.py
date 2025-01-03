@@ -22,4 +22,4 @@ for i, row in remaining_rows.iterrows():
         'datasets/oect_summary_posted_rf__plus_ml_combined.csv', index=False
     )
 
-    time.sleep(10)
+    time.sleep(30)

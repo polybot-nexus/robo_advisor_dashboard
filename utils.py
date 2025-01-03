@@ -184,6 +184,22 @@ def create_plotly_stock_market_plot(oect_data):
             col=1,
         )
 
+    if macd is None: 
+        # adding empty plot for if macd is None for visual purposes      
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=[None] * len(x),
+                mode='lines',
+                #line={'color': 'black', 'dash': 'dot'},
+                #name='MACD',
+                legendgroup='2',
+                showlegend=False
+            ),
+            row=3,
+            col=1,
+        )
+
     # Update layout for full width and add spike lines
     default_font = {
         'family': 'Arial',
@@ -268,7 +284,7 @@ def create_plotly_stock_market_plot(oect_data):
         },
         yaxis2={
             **default_values,
-            'title_text': 'Transconductance',
+            'title_text': 'μC* (F cm⁻¹ V⁻¹ s⁻¹)',
             'side': 'right',
             **add_spike_line,
         },
