@@ -27,8 +27,13 @@ from utils import (  # , create_plotly_trendline_fit, get_trendline_slope
 
 def update_message_box(oect_data):
     import pandas_ta as ta
-
+    
+    if oect_data is None or len(oect_data) == 0:
+        return "No data available."
+        
     df = oect_data.copy()
+    
+    # Calculate technical indicators
     df['SMA_10'] = ta.sma(df['transconductance'], length=10)
     df['EMA_10'] = ta.ema(df['transconductance'], length=10)
     df['EMA_20'] = ta.ema(df['transconductance'], length=20)
@@ -36,22 +41,60 @@ def update_message_box(oect_data):
     df['SMA_50'] = ta.sma(df['transconductance'], length=50)
     df['SMA_20'] = ta.sma(df['transconductance'], length=20)
     df['RSI'] = ta.rsi(df['transconductance'], length=14)
-
-    # slopes = get_trendline_slope(oect_data)
-    if oect_data is None or len(oect_data) == 0:
-        return "No data available."
+    
     try:
+        # Calculate MACD
         macd = ta.macd(df['transconductance'], fast=10, slow=20, signal=8)
         df = pd.concat([df, macd], axis=1)
-        # print('MACD', df['MACDh_10_20_8'].values)
-        if df['MACDh_10_20_8'].values[-1] < 0:
-            return "The MACD indicator is showing a downward trajectory. Consider changing strategy by selecting different ML model or modify the parameter range."
-    # if consecutive_declines(slopes) >= 3:
-    #     return "The transconductance trendline slope is showing a downward trajectory. Consider Changing strategy."
-    except:
-        return None # "AI-advisor will display a message if any workflow modification is required."
+        
+        macd_values = df['MACDh_10_20_8'].values
+        current_index = len(macd_values) - 1  # Get the latest point index
+        
+        # Look back from the current point to find the last negative value
+        last_negative_index = None
+        for i in range(current_index, max(-1, current_index - 6), -1):
+            if macd_values[i] < 0:
+                last_negative_index = i
+                break
 
-    return None #"AI-advisor will display a message if any workflow modification is required."
+        # print('last_negative_index', last_negative_index)
+        # If we found a negative value in the last 5 points
+        if last_negative_index is not None and (current_index - last_negative_index) <= 5:
+            return f"The MACD indicator is showing a downward trajectory at sample number {df.loc[last_negative_index, '#']}. Consider changing strategy by selecting different ML model or modify the parameter range."
+                
+    except Exception as e:
+        #print(f"Error in MACD calculation: {e}")
+        return None
+    
+    return None
+
+# def update_message_box(oect_data):
+#     import pandas_ta as ta
+
+#     df = oect_data.copy()
+#     df['SMA_10'] = ta.sma(df['transconductance'], length=10)
+#     df['EMA_10'] = ta.ema(df['transconductance'], length=10)
+#     df['EMA_20'] = ta.ema(df['transconductance'], length=20)
+#     df['SMA_200'] = ta.sma(df['transconductance'], length=200)
+#     df['SMA_50'] = ta.sma(df['transconductance'], length=50)
+#     df['SMA_20'] = ta.sma(df['transconductance'], length=20)
+#     df['RSI'] = ta.rsi(df['transconductance'], length=14)
+
+#     # slopes = get_trendline_slope(oect_data)
+#     if oect_data is None or len(oect_data) == 0:
+#         return "No data available."
+#     try:
+#         macd = ta.macd(df['transconductance'], fast=10, slow=20, signal=8)
+#         df = pd.concat([df, macd], axis=1)
+#         # print('MACD', df['MACDh_10_20_8'].values)
+#         if df['MACDh_10_20_8'].values[-1] < 0:
+#             return f"The MACD indicator is showing a downward trajectory at sample number {df['MACDh_10_20_8'].values[-1]}. Consider changing strategy by selecting different ML model or modify the parameter range."
+#     # if consecutive_declines(slopes) >= 3:
+#     #     return "The transconductance trendline slope is showing a downward trajectory. Consider Changing strategy."
+#     except:
+#         return None # "AI-advisor will display a message if any workflow modification is required."
+
+#     return None #"AI-advisor will display a message if any workflow modification is required."
 
 
 def consecutive_declines(data):

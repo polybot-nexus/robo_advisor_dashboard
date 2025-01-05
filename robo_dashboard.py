@@ -14,6 +14,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import plotly.io as pio
 from PIL import Image
+from dash.exceptions import PreventUpdate
 
 from ml_models import (
     evaluate_ml_models,
@@ -27,8 +28,13 @@ from utils import (  # , create_plotly_trendline_fit, get_trendline_slope
 
 def update_message_box(oect_data):
     import pandas_ta as ta
-
+    
+    if oect_data is None or len(oect_data) == 0:
+        return "No data available."
+        
     df = oect_data.copy()
+    
+    # Calculate technical indicators
     df['SMA_10'] = ta.sma(df['transconductance'], length=10)
     df['EMA_10'] = ta.ema(df['transconductance'], length=10)
     df['EMA_20'] = ta.ema(df['transconductance'], length=20)
@@ -36,22 +42,32 @@ def update_message_box(oect_data):
     df['SMA_50'] = ta.sma(df['transconductance'], length=50)
     df['SMA_20'] = ta.sma(df['transconductance'], length=20)
     df['RSI'] = ta.rsi(df['transconductance'], length=14)
-
-    # slopes = get_trendline_slope(oect_data)
-    if oect_data is None or len(oect_data) == 0:
-        return "No data available."
+    
     try:
+        # Calculate MACD
         macd = ta.macd(df['transconductance'], fast=10, slow=20, signal=8)
         df = pd.concat([df, macd], axis=1)
-        # print('MACD', df['MACDh_10_20_8'].values)
-        if df['MACDh_10_20_8'].values[-1] < 0:
-            return f"The MACD indicator is showing a downward trajectory at sample number {df['MACDh_10_20_8'].values[-1]}. Consider changing strategy by selecting different ML model or modify the parameter range."
-    # if consecutive_declines(slopes) >= 3:
-    #     return "The transconductance trendline slope is showing a downward trajectory. Consider Changing strategy."
-    except:
-        return None # "AI-advisor will display a message if any workflow modification is required."
+        
+        macd_values = df['MACDh_10_20_8'].values
+        current_index = len(macd_values) - 1  # Get the latest point index
+        
+        # Look back from the current point to find the last negative value
+        last_negative_index = None
+        for i in range(current_index, max(-1, current_index - 6), -1):
+            if macd_values[i] < 0:
+                last_negative_index = i
+                break
 
-    return None #"AI-advisor will display a message if any workflow modification is required."
+        # print('last_negative_index', last_negative_index)
+        # If we found a negative value in the last 5 points
+        if last_negative_index is not None and (current_index - last_negative_index) <= 5:
+            return f"The MACD indicator is showing a downward trajectory at sample number {df.loc[last_negative_index, '#']}. Consider changing strategy by selecting different ML model or modify the parameter range."
+                
+    except Exception as e:
+        #print(f"Error in MACD calculation: {e}")
+        return None
+    
+    return None
 
 
 def consecutive_declines(data):
@@ -110,55 +126,73 @@ def encode_image(image_file):
         encoded = base64.b64encode(f.read()).decode('ascii')
     return f'data:image/jpeg;base64,{encoded}'
 
-# Add DataManager at the top of your file
+
+# DataManager to handdle the high-throughput data and detect new datapoints added in the file
 class DataManager:
     def __init__(self, csv_path):
         self.csv_path = csv_path
         self.last_update = None
         self.data = None
+        self.previous_data = None  # Cache for previous data
         self._load_data()
 
     def _load_data(self):
         """Load and process the CSV data"""
-        df = pd.read_csv(self.csv_path)
-        
-        # Process the data
-        df['coating_on_top.sol_label'] = df['coating_on_top.sol_label'].map(
-            lambda x: x.lstrip('mg/ml').rstrip('mg/ml'))
-        df['coating_on_top.substrate_label'] = df['coating_on_top.substrate_label'].map(
-            lambda x: x.lstrip('nm').rstrip('nm'))
+        try:
+            df = pd.read_csv(self.csv_path)
             
-        # Convert columns to numeric
-        numeric_columns = [
-            'coating_on_top.sol_label',
-            'coating_on_top.substrate_label',
-            'coating_on_top.vel',
-            'coating_on_top.T'
-        ]
-        for col in numeric_columns:
-            df[col] = pd.to_numeric(df[col])
+            # Process the data
+            df['coating_on_top.sol_label'] = df['coating_on_top.sol_label'].map(
+                lambda x: x.lstrip('mg/ml').rstrip('mg/ml'))
+            df['coating_on_top.substrate_label'] = df['coating_on_top.substrate_label'].map(
+                lambda x: x.lstrip('nm').rstrip('nm'))
+                
+            # Convert columns to numeric
+            numeric_columns = [
+                'coating_on_top.sol_label',
+                'coating_on_top.substrate_label',
+                'coating_on_top.vel',
+                'coating_on_top.T'
+            ]
+            for col in numeric_columns:
+                df[col] = pd.to_numeric(df[col])
+                
+            # Add image links
+            df['image'] = df['ID'].apply(create_image_link)
             
-        # Add image links
-        df['image'] = df['ID'].apply(create_image_link)
-        
-        self.data = df
-        self.last_update = os.path.getmtime(self.csv_path)
-        return df
+            # Store previous data before updating
+            if self.data is not None:
+                self.previous_data = self.data.copy()
+            
+            self.data = df
+            self.last_update = os.path.getmtime(self.csv_path)
+            return df
+        except Exception as e:
+            print(f"Error loading data: {str(e)}")
+            return self.previous_data if self.previous_data is not None else pd.DataFrame()
 
     def needs_update(self):
         """Check if the CSV file has been modified"""
         try:
+            if self.last_update is None:
+                return True
             current_time = os.path.getmtime(self.csv_path)
             return current_time > self.last_update
-        except OSError:
-            # Handle file access errors
+        except OSError as e:
+            print(f"Error checking file modification time: {str(e)}")
             return False
 
     def get_data(self, force_refresh=False):
         """Get the data, refreshing if needed or forced"""
-        if force_refresh or self.needs_update():
-            return self._load_data()
-        return self.data
+        try:
+            if force_refresh or self.needs_update():
+                new_data = self._load_data()
+                return new_data if not new_data.empty else self.previous_data
+            return self.data if self.data is not None else self.previous_data
+        except Exception as e:
+            print(f"Error getting data: {str(e)}")
+            return self.previous_data if self.previous_data is not None else pd.DataFrame()
+
 
 # Initialize the global data manager
 data_manager = DataManager('datasets/oect_summary_posted_rf__plus_ml_combined.csv')
@@ -269,7 +303,7 @@ app.layout = html.Div([
         html.Div(id='tabs-content-inline', style=content_style),
         html.Div(id='hover-data-output', style={'display': 'none'}),
         dcc.Interval(
-            id='page-load', interval=18000, n_intervals=0, disabled=False# interval=1, n_intervals=0, max_intervals=1  #interval=50000, n_intervals=0#, max_intervals=-1  # interval=1, n_intervals=0, max_intervals=1 
+            id='page-load', interval=1, n_intervals=0, max_intervals=1  #interval=18000, n_intervals=0, disabled=False# interval=1, n_intervals=0, max_intervals=1  #interval=50000, n_intervals=0#, max_intervals=-1  # interval=1, n_intervals=0, max_intervals=1 
         ), 
     ], style=container_style)
 
@@ -885,6 +919,74 @@ def update_feature_importance_plot():
 #     )
 
 
+# @app.callback(
+#     [
+#         Output('stock-market-plot', 'figure'),
+#         Output('results-table-div', 'children'),
+#         Output('feature-importance-plot', 'figure'),
+#         Output('message-box', 'children'),
+#     ],
+#     [Input('stock-market-plot', 'relayoutData'),
+#      Input('page-load', 'n_intervals')],  # Add this input
+#     prevent_initial_call=False,  # Change this to False
+# )
+# def update_charts(relayout_data, n_intervals):  # Add n_intervals parameter
+#     # data_file_path = 'datasets/oect_summary_posted_rf__plus_ml_combined.csv'
+#     oect_data = pd.read_csv(
+#         'datasets/oect_summary_posted_rf__plus_ml_combined.csv'
+#     )
+#     oect_data['coating_on_top.sol_label'] = oect_data[
+#         'coating_on_top.sol_label'
+#     ].map(lambda x: x.lstrip('mg/ml').rstrip('mg/ml'))
+#     oect_data['coating_on_top.substrate_label'] = oect_data[
+#         'coating_on_top.substrate_label'
+#     ].map(lambda x: x.lstrip('nm').rstrip('nm'))
+#     oect_data['coating_on_top.sol_label'] = pd.to_numeric(
+#         oect_data['coating_on_top.sol_label']
+#     )
+#     oect_data['coating_on_top.substrate_label'] = pd.to_numeric(
+#         oect_data['coating_on_top.substrate_label']
+#     )
+#     oect_data['coating_on_top.vel'] = pd.to_numeric(
+#         oect_data['coating_on_top.vel']
+#     )
+#     oect_data['coating_on_top.T'] = pd.to_numeric(oect_data['coating_on_top.T'])
+#     df = oect_data.copy()
+#     df['image'] = df['ID'].apply(create_image_link)
+    
+#     # print("relayout_data:", relayout_data)  # Debug print
+#     # if relayout_data and 'xaxis.range' in relayout_data:
+#     start_idx = 0 #int(float(relayout_data['xaxis.range'][0]))
+#     end_idx = df.shape[0] #int(float(relayout_data['xaxis.range'][1]))
+#     filtered_data = oect_data.iloc[start_idx:end_idx]
+#         # print('Range selected:', start_idx, '-', end_idx)
+#         #    print('Filtered data shape:', filtered_data)
+
+#     fig = create_plotly_stock_market_plot(filtered_data)
+#     fig.update_layout(xaxis_range=[start_idx, end_idx])
+
+#     model_results = update_ml_models_table(
+#             f"ml_model_weights/results_{start_idx}_{end_idx}.json"
+#         )
+#         #print('model_results', model_results)
+#         #    model_results = evaluate_ml_models(filtered_data)
+#     importance_fig = shapley_analysis_plotly(filtered_data)
+#     return (
+#             fig,
+#             model_results,
+#             importance_fig,
+#             update_message_box(filtered_data),
+#         )  # update_ml_models_table(model_results),
+
+#     # return (
+#     #     create_plotly_stock_market_plot(oect_data),
+#     #     update_ml_models_table('ml_model_weights/results_0_64.json'),
+#     #     update_feature_importance_plot(),
+#     #     update_message_box(oect_data),
+#     # )
+
+
+
 @app.callback(
     [
         Output('stock-market-plot', 'figure'),
@@ -892,64 +994,63 @@ def update_feature_importance_plot():
         Output('feature-importance-plot', 'figure'),
         Output('message-box', 'children'),
     ],
-    [Input('stock-market-plot', 'relayoutData'),
-     Input('page-load', 'n_intervals')],  # Add this input
-    prevent_initial_call=False,  # Change this to False
+    [
+        Input('stock-market-plot', 'relayoutData'),
+        Input('page-load', 'n_intervals')
+    ],
+    prevent_initial_call=False,
 )
-def update_charts(relayout_data, n_intervals):  # Add n_intervals parameter
-    # data_file_path = 'datasets/oect_summary_posted_rf__plus_ml_combined.csv'
-    oect_data = pd.read_csv(
-        'datasets/oect_summary_posted_rf__plus_ml_combined.csv'
-    )
-    oect_data['coating_on_top.sol_label'] = oect_data[
-        'coating_on_top.sol_label'
-    ].map(lambda x: x.lstrip('mg/ml').rstrip('mg/ml'))
-    oect_data['coating_on_top.substrate_label'] = oect_data[
-        'coating_on_top.substrate_label'
-    ].map(lambda x: x.lstrip('nm').rstrip('nm'))
-    oect_data['coating_on_top.sol_label'] = pd.to_numeric(
-        oect_data['coating_on_top.sol_label']
-    )
-    oect_data['coating_on_top.substrate_label'] = pd.to_numeric(
-        oect_data['coating_on_top.substrate_label']
-    )
-    oect_data['coating_on_top.vel'] = pd.to_numeric(
-        oect_data['coating_on_top.vel']
-    )
-    oect_data['coating_on_top.T'] = pd.to_numeric(oect_data['coating_on_top.T'])
-    df = oect_data.copy()
-    df['image'] = df['ID'].apply(create_image_link)
+def update_charts(relayout_data, n_intervals):
+    ctx = dash.callback_context
     
-    # print("relayout_data:", relayout_data)  # Debug print
-    # if relayout_data and 'xaxis.range' in relayout_data:
-    start_idx = 0 #int(float(relayout_data['xaxis.range'][0]))
-    end_idx = df.shape[0] #int(float(relayout_data['xaxis.range'][1]))
-    filtered_data = oect_data.iloc[start_idx:end_idx]
-        # print('Range selected:', start_idx, '-', end_idx)
-        #    print('Filtered data shape:', filtered_data)
+    # Get the current data
+    current_data = data_manager.get_data()
+    
+    # If there's no data, return the previous state
+    if current_data is None or current_data.empty:
+        raise PreventUpdate
+        
+    # Calculate indices
+    if relayout_data and 'xaxis.range' in relayout_data:
+        start_idx = max(0, int(float(relayout_data['xaxis.range'][0])))
+        end_idx = min(current_data.shape[0], int(float(relayout_data['xaxis.range'][1])))
+    else:
+        start_idx = 0
+        end_idx = current_data.shape[0]
+        
+    filtered_data = current_data.iloc[start_idx:end_idx]
 
+    # Create stock market plot
     fig = create_plotly_stock_market_plot(filtered_data)
-    fig.update_layout(xaxis_range=[start_idx, end_idx])
+    
+    # Update layout only if we have data
+    if not filtered_data.empty:
+        fig.update_layout(
+            xaxis_range=[start_idx, end_idx],
+            showlegend=True,
+            height=600,
+            margin=dict(l=50, r=50, t=50, b=50)
+        )
 
-    model_results = update_ml_models_table(
+    # Get model results
+    try:
+        model_results = update_ml_models_table(
             f"ml_model_weights/results_{start_idx}_{end_idx}.json"
         )
-        #print('model_results', model_results)
-        #    model_results = evaluate_ml_models(filtered_data)
-    importance_fig = shapley_analysis_plotly(filtered_data)
-    return (
-            fig,
-            model_results,
-            importance_fig,
-            update_message_box(filtered_data),
-        )  # update_ml_models_table(model_results),
+    except Exception as e:
+        print(f"Error loading model results: {str(e)}")
+        #model_results = create_default_table()
 
-    # return (
-    #     create_plotly_stock_market_plot(oect_data),
-    #     update_ml_models_table('ml_model_weights/results_0_64.json'),
-    #     update_feature_importance_plot(),
-    #     update_message_box(oect_data),
-    # )
+    # Create SHAP plot
+    importance_fig = shapley_analysis_plotly(filtered_data)
+    
+    # Get message
+    message = update_message_box(filtered_data)
+    if not message:
+        message = "AI advisor is monitoring the workflow. No modifications required at this time."
+
+    return fig, model_results, importance_fig, message
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)

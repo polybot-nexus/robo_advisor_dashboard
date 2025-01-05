@@ -1,3 +1,6 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
+frames_1
+frames_2
+dashboard_monitoring

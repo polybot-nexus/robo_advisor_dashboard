@@ -23,3 +23,5 @@ python robo_advisor.py
 A screenshot of the dashboard is shown below:
 
 ![Robo Advisor Dashboard](./assets/dashboard_screenshot.png)
+
+An online version of the dashboard is available in : https://robo-advisor-dashboard.onrender.com  
